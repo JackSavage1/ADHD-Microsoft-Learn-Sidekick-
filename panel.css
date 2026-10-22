@@ -1,0 +1,608 @@
+/* =============================================================================
+   Sidekick panel styles
+   -----------------------------------------------------------------------------
+   The panel is one full-height column:
+
+       header (timer + stats)
+       progress bar
+       step card   <- takes all the leftover height
+       buttons
+
+   Because the card only gets the leftover height, a step can never push the
+   page into scrolling. panel.js shrinks the card's text if it would overflow.
+   All colours are variables, so dark mode is just a second set of values.
+   ========================================================================== */
+
+
+/* ---- Colours (light) ---------------------------------------------------- */
+
+:root {
+  color-scheme: light dark;
+
+  --bg: #f5f4f0;
+  --surface: #ffffff;
+  --text: #15171a;
+  --muted: #4a5058;
+  --border: #dbd8d0;
+  --border-strong: #868c95;
+  --track: #e2dfd7;
+  --chip-bg: #edebe5;
+
+  --primary: #1b5bb5;
+  --primary-hover: #154a96;
+  --on-primary: #ffffff;
+  --focus: #0b57d0;
+
+  --hint-bg: #eaf1fb;
+  --hint-border: #a9c4ea;
+  --hint-label: #174a8c;
+
+  --answer-bg: #e7f4eb;
+  --answer-border: #9fcfae;
+  --answer-label: #1b6136;
+
+  --warn-bg: #fff3d4;
+  --warn-border: #d39b00;
+  --warn-text: #3d2c00;
+  --warn-label: #7a4f00;
+}
+
+
+/* ---- Colours (dark) ----------------------------------------------------- */
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #121417;
+    --surface: #1c1f24;
+    --text: #eef0f3;
+    --muted: #b8bec7;
+    --border: #30353d;
+    --border-strong: #737a85;
+    --track: #2b3037;
+    --chip-bg: #282c32;
+
+    --primary: #8ab4f8;
+    --primary-hover: #a8c7fa;
+    --on-primary: #0b1a33;
+    --focus: #a8c7fa;
+
+    --hint-bg: #16243a;
+    --hint-border: #2f4b73;
+    --hint-label: #a8c7fa;
+
+    --answer-bg: #12291a;
+    --answer-border: #2d6a43;
+    --answer-label: #8fd6a6;
+
+    --warn-bg: #2f250c;
+    --warn-border: #d9a300;
+    --warn-text: #f7e6b5;
+    --warn-label: #f2c14e;
+  }
+}
+
+
+/* ---- Base --------------------------------------------------------------- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Make the `hidden` attribute win over any `display` set below. */
+[hidden] {
+  display: none !important;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.45;
+  overflow: hidden; /* the layout always fits, so never show a page scrollbar */
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+button,
+input {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.eyebrow {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+
+/* ---- Page layout -------------------------------------------------------- */
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+}
+
+.stage {
+  flex: 1 1 auto;
+  min-height: 0; /* lets the stage shrink instead of overflowing the panel */
+  display: flex;
+  flex-direction: column;
+  padding: 10px 12px;
+}
+
+.loading {
+  margin: auto;
+  color: var(--muted);
+}
+
+
+/* ---- Header: timer and stats -------------------------------------------- */
+
+.topbar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 12px;
+}
+
+.timer-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.timer {
+  font-size: 1.625rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  min-width: 4.6ch;
+}
+
+/* The clock is greyed out while it isn't counting down. */
+.timer-group:not([data-status="running"]) .timer {
+  color: var(--muted);
+}
+
+.icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.icon-btn:hover:not(:disabled) {
+  border-color: var(--border-strong);
+}
+
+.icon-btn svg {
+  width: 22px;
+  height: 22px;
+  fill: currentColor;
+}
+
+/* Show "play" unless running; show "pause" only while running. */
+.timer-group[data-status="running"] .icon-play,
+.timer-group:not([data-status="running"]) .icon-pause {
+  display: none;
+}
+
+.stats {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  color: var(--muted);
+  text-align: right;
+}
+
+.stats strong {
+  color: var(--text);
+}
+
+
+/* ---- Progress bar ------------------------------------------------------- */
+
+.progress-track {
+  flex-shrink: 0;
+  height: 8px;
+  margin: 2px 12px 0;
+  border-radius: 999px;
+  background: var(--track);
+  overflow: hidden;
+}
+
+.progress-fill {
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--primary);
+  transition: width 250ms ease-out; /* the only motion in the panel */
+}
+
+
+/* ---- Cards -------------------------------------------------------------- */
+
+.card {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+
+/* Lesson-complete and error cards: short, centred content. */
+.center-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.card-title {
+  font-size: 1.625rem;
+  line-height: 1.25;
+}
+
+.score {
+  font-size: 1.125rem;
+}
+
+.score strong {
+  display: block;
+  font-size: 2.25rem;
+  line-height: 1.2;
+}
+
+.error-detail {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 0.875rem;
+  overflow-wrap: anywhere;
+}
+
+
+/* ---- The step card -------------------------------------------------------
+   Everything inside is sized in `em`, so panel.js can shrink the whole card
+   by lowering --text-scale (1 = normal size). --hero-ratio is how much bigger
+   the instruction is than the body text; panel.js lowers it a little too. */
+
+.step-card {
+  --text-scale: 1;
+  --hero-ratio: 1.625;
+  font-size: calc(1rem * var(--text-scale));
+  line-height: 1.4;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75em;
+  padding: max(10px, 1em) max(12px, 1.125em);
+  overflow-wrap: break-word;
+}
+
+.step-card > * {
+  flex-shrink: 0;
+}
+
+/* Last resort for panels far smaller than we design for: scroll, don't hide. */
+.step-card.is-scrollable {
+  overflow-y: auto;
+}
+
+.step-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35em 0.5em;
+  font-size: 0.875em;
+  color: var(--muted);
+}
+
+.step-counter {
+  font-weight: 600;
+}
+
+.chip {
+  padding: 0.1em 0.65em;
+  border-radius: 999px;
+  background: var(--chip-bg);
+  font-weight: 600;
+}
+
+.chip-quiz {
+  background: var(--hint-bg);
+  color: var(--hint-label);
+}
+
+.chip-done {
+  background: var(--answer-bg);
+  color: var(--answer-label);
+}
+
+/* The hero: what to do right now. 26px at normal size. */
+.instruction {
+  font-size: calc(1em * var(--hero-ratio));
+  line-height: 1.28;
+  font-weight: 600;
+}
+
+.why {
+  color: var(--muted);
+}
+
+.why::before {
+  content: "Why: ";
+  font-weight: 700;
+  color: var(--text);
+}
+
+.warning {
+  padding: 0.5em 0.75em;
+  border-left: 4px solid var(--warn-border);
+  border-radius: 0.5em;
+  background: var(--warn-bg);
+  color: var(--warn-text);
+  font-size: 0.9375em;
+}
+
+.warning::before {
+  content: "\26A0\FE0E  ";
+  font-weight: 700;
+  color: var(--warn-label);
+}
+
+.reveal {
+  padding: 0.5em 0.75em;
+  border: 1px solid;
+  border-radius: 0.6em;
+}
+
+.hint {
+  background: var(--hint-bg);
+  border-color: var(--hint-border);
+}
+
+.hint::before {
+  content: "Hint: ";
+  font-weight: 700;
+  color: var(--hint-label);
+}
+
+.answer {
+  background: var(--answer-bg);
+  border-color: var(--answer-border);
+}
+
+.answer::before {
+  content: "Answer: ";
+  font-weight: 700;
+  color: var(--answer-label);
+}
+
+
+/* ---- Buttons ------------------------------------------------------------ */
+
+.actions {
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap; /* very narrow panels wrap rather than squash */
+  gap: 8px;
+  padding: 0 12px 12px;
+}
+
+/* Quiz self-score buttons get a full-width row above the others. */
+.score-row {
+  order: -1;
+  flex: 1 0 100%;
+  display: flex;
+  gap: 8px;
+}
+
+.score-row .btn {
+  flex: 1 1 0;
+  padding: 0 10px;
+}
+
+.btn {
+  min-height: 48px;
+  padding: 0 16px;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.btn:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.btn-primary {
+  flex: 1 1 auto;
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+.btn-secondary {
+  background: var(--surface);
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--chip-bg);
+}
+
+.btn-secondary:disabled {
+  border-style: dashed;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--muted);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background: var(--chip-bg);
+  color: var(--text);
+}
+
+.btn-back {
+  display: inline-grid;
+  place-items: center;
+  width: 48px;
+  padding: 0;
+}
+
+.btn-back svg {
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
+}
+
+
+/* ---- Session-complete overlay ------------------------------------------- */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  padding: 24px 16px;
+  background: var(--bg);
+  overflow-y: auto;
+}
+
+.overlay-inner {
+  width: 100%;
+  max-width: 440px;
+  margin: auto; /* centres the content, but still scrolls safely if it can't fit */
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.overlay h2 {
+  font-size: 1.75rem;
+  line-height: 1.2;
+}
+
+.overlay p {
+  font-size: 1.0625rem;
+}
+
+.overlay .btn {
+  width: 100%;
+}
+
+.session-steps {
+  color: var(--text);
+}
+
+.log-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.log-form label {
+  font-size: 1.0625rem;
+  font-weight: 600;
+}
+
+.log-form input {
+  min-height: 48px;
+  padding: 0 12px;
+  border: 2px solid var(--border-strong);
+  border-radius: 10px;
+  background: var(--surface);
+  font-size: 1.0625rem;
+}
+
+.overlay .field-help {
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.log-form .btn {
+  margin-top: 6px;
+}
+
+
+/* ---- Short panels: trim the padding a little ---------------------------- */
+
+@media (max-height: 600px) {
+  .topbar {
+    padding-block: 4px;
+  }
+
+  .stage {
+    padding-block: 8px;
+  }
+
+  .actions {
+    padding-bottom: 8px;
+  }
+}
+
+
+/* ---- Respect "reduce motion" -------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .progress-fill {
+    transition: none;
+  }
+}

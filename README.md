@@ -30,6 +30,13 @@ After you edit any file, go back to `chrome://extensions` and click the reload a
 3. Stuck? Press **Stuck** once for a hint, twice for the answer.
 4. When the timer hits zero, write one line about what you did, press **Log session**, and take a real break.
 
+Good to know:
+
+- The timer keeps counting if you close the panel. If time ran out while it was closed, the walk-away screen is waiting when you reopen it.
+- Keyboard shortcuts: **Enter** = Done (or Reveal answer on a quiz), **S** = Stuck, **B** or **←** = Back.
+- Your streak counts days in a row with at least one logged session.
+- Power Apps sometimes renames buttons. If a label in a step doesn't match your screen, press Stuck: the hints cover the common alternatives.
+
 ## Project files
 
 | File | What it is |

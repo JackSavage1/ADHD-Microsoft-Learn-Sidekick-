@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Sidekick</title>
+  <link rel="stylesheet" href="panel.css">
+  <!-- Extension pages (Manifest V3) block inline scripts, so all behaviour lives in panel.js.
+       "defer" runs it after the page below has been parsed. -->
+  <script src="panel.js" defer></script>
+</head>
+<body>
+
+  <!-- ===== The app: header, progress bar, one step, action buttons ===== -->
+  <div id="app" class="app">
+
+    <header class="topbar">
+      <!-- 25-minute focus timer. data-status (idle/running/paused/ended) drives the styling. -->
+      <div id="timer-group" class="timer-group" data-status="idle">
+        <span class="visually-hidden">Focus time left:</span>
+        <span id="timer" class="timer" role="timer">25:00</span>
+        <button id="timer-toggle" class="icon-btn" type="button" aria-label="Start timer" title="Start timer">
+          <svg class="icon-play" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 5.5v13l10.5-6.5z"/></svg>
+          <svg class="icon-pause" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6.5 5h4v14h-4zM13.5 5h4v14h-4z"/></svg>
+        </button>
+      </div>
+
+      <!-- Quiet stats. The numbers sit in their own elements so they are easy to read and test. -->
+      <div class="stats">
+        <span><strong id="streak">0</strong> <span id="streak-label">day streak</span></span>
+        <span><strong id="sessions">0</strong> <span id="sessions-label">sessions</span></span>
+      </div>
+    </header>
+
+    <!-- Lesson progress: the fill's width and aria-valuenow are both set by panel.js. -->
+    <div class="progress-track">
+      <div id="progress-bar" class="progress-fill" role="progressbar" aria-label="Lesson progress"
+           aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
+    </div>
+
+    <main id="stage" class="stage">
+      <p id="loading" class="loading">Loading lesson…</p>
+
+      <!-- The current step. Only one is ever shown. -->
+      <section id="step-view" class="card step-card" aria-live="polite" hidden>
+        <div class="step-meta">
+          <span id="step-counter" class="step-counter">Step 1 of 1</span>
+          <span id="step-minutes" class="chip" hidden></span>
+          <span id="step-quiz-chip" class="chip chip-quiz" hidden>Quiz</span>
+          <span id="step-done-chip" class="chip chip-done" hidden>✓ Done</span>
+        </div>
+        <h1 id="step-instruction" class="instruction"></h1>
+        <p id="step-why" class="why" hidden></p>
+        <p id="step-warning" class="warning" role="note" hidden></p>
+        <p id="hint" class="reveal hint" hidden></p>
+        <p id="answer" class="reveal answer" hidden></p>
+      </section>
+
+      <!-- Shown after the final step. -->
+      <section id="lesson-complete" class="card center-card" hidden>
+        <p class="eyebrow">All steps done</p>
+        <h2 class="card-title">Lesson complete</h2>
+        <p id="complete-lesson-title" class="muted"></p>
+        <p id="quiz-score-line" class="score">Quiz score <strong id="quiz-score">0/0</strong></p>
+        <p class="muted">Restarting clears the steps for this lesson only. Your streak and sessions stay.</p>
+        <button id="restart-btn" type="button" class="btn btn-secondary">Restart lesson</button>
+      </section>
+
+      <!-- Shown if the lesson file can't be loaded. -->
+      <section id="error" class="card center-card" role="alert" hidden>
+        <p class="eyebrow">Something went wrong</p>
+        <h2 class="card-title">The lesson didn't load</h2>
+        <p class="muted">Sidekick couldn't read its lesson file. Your progress, streak, and timer are safe.</p>
+        <p id="error-detail" class="error-detail"></p>
+        <button id="retry-btn" type="button" class="btn btn-secondary">Try again</button>
+      </section>
+    </main>
+
+    <!-- Action buttons. Done is the one primary action; Back is deliberately small. -->
+    <footer id="actions" class="actions" hidden>
+      <div id="score-row" class="score-row" hidden>
+        <button id="right-btn" type="button" class="btn btn-secondary">✓ I got it right</button>
+        <button id="wrong-btn" type="button" class="btn btn-secondary">✗ I got it wrong</button>
+      </div>
+      <button id="back-btn" type="button" class="btn btn-ghost btn-back" aria-label="Back to previous step" title="Back (B)">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15.4 5.4 14 4l-8 8 8 8 1.4-1.4L8.8 12z"/></svg>
+      </button>
+      <button id="stuck-btn" type="button" class="btn btn-secondary" title="Show a hint (S)">Stuck?</button>
+      <button id="done-btn" type="button" class="btn btn-primary" title="Done (Enter)">Done</button>
+      <button id="reveal-btn" type="button" class="btn btn-primary" title="Reveal answer (Enter)" hidden>Reveal answer</button>
+    </footer>
+  </div>
+
+  <!-- ===== Session complete: covers the whole panel until the session is logged ===== -->
+  <div id="session-complete" class="overlay" role="dialog" aria-modal="true" aria-label="Session complete" hidden>
+
+    <div id="log-view" class="overlay-inner">
+      <p class="eyebrow">Focus session done</p>
+      <h2>Session complete. Walk away.</h2>
+      <p class="muted">Stand up, stretch, get some water. First, one line for future you.</p>
+      <p class="session-steps">Steps done this session: <strong id="session-steps">0</strong></p>
+      <form id="log-form" class="log-form" novalidate>
+        <label for="log-note">What did you get done?</label>
+        <input id="log-note" type="text" maxlength="140" autocomplete="off" spellcheck="true"
+               required aria-describedby="log-help">
+        <p id="log-help" class="field-help">A few words is enough.</p>
+        <button id="log-btn" type="submit" class="btn btn-primary" disabled>Log session</button>
+      </form>
+    </div>
+
+    <div id="break-view" class="overlay-inner" hidden>
+      <p class="eyebrow">Saved</p>
+      <h2>Logged. Take a break.</h2>
+      <p id="break-summary" class="session-steps"></p>
+      <p class="muted">The timer will wait until you press Done, Stuck, or play.</p>
+      <button id="break-continue-btn" type="button" class="btn btn-secondary">Back to the lesson</button>
+    </div>
+  </div>
+
+</body>
+</html>
