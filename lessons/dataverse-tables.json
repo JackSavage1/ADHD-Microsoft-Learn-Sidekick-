@@ -1,0 +1,230 @@
+{
+  "schema_version": 1,
+  "id": "dataverse-tables",
+  "title": "Manage tables in Dataverse",
+  "source": "https://learn.microsoft.com/en-us/training/modules/create-manage-entities/",
+  "steps": [
+    {
+      "id": "check-environment",
+      "type": "task",
+      "instruction": "At make.powerapps.com, click the Environment picker at the top right. Confirm you are in a Developer or Trial environment, not a production one.",
+      "why": "Everything you build lands in the selected environment, so practice where mistakes cannot hurt real users or data.",
+      "estimated_minutes": 2,
+      "hint": "Not sure of the type? In the Power Platform admin center, open Manage, then Environments, and read the Type column. Developer or Trial is safe.",
+      "answer": "Top right, click Environment and pick your developer or trial environment. The page reloads with its name shown at the top right. Only Default or production listed? Create a free Developer environment first.",
+      "warning": "Never practice in production. Some table settings in this lesson can never be undone."
+    },
+    {
+      "id": "open-tables-list",
+      "type": "task",
+      "instruction": "In your Power Apps tab, left menu, click Tables. Then click the All tab above the list so every table shows, not only the recommended ones.",
+      "why": "The Tables list is your home base for Dataverse: every table, built in or custom, starts here.",
+      "estimated_minutes": 2,
+      "hint": "No Tables in the left menu? Click More, then Tables. You can pin it so it stays in the menu next time.",
+      "answer": "Left menu, Tables (or More, then Tables). Tabs above the list read Recommended, Custom, and All. All shows hundreds of tables with columns such as Name, Type, and Managed."
+    },
+    {
+      "id": "explore-standard-account",
+      "type": "task",
+      "instruction": "In the Tables list, search for Account and read its Type value. Then open Account and find which column is its primary column.",
+      "why": "Account is a classic standard table: built in, customizable, and a model for the tables you will create.",
+      "estimated_minutes": 3,
+      "hint": "Use the Search box above the list. On the table page, look in the table properties card near the top.",
+      "answer": "Type reads Standard. On the Account page, the properties card shows Primary column: Account Name. That is the text you see whenever you pick an account anywhere in an app."
+    },
+    {
+      "id": "explore-activity-task",
+      "type": "task",
+      "instruction": "Search Tables for Task and note its Type. Open Task, click Columns under Schema, and find the Subject, Regarding, and Due Date columns.",
+      "why": "Activity tables track time-based actions, and they all share common columns like Subject, Regarding, and due dates.",
+      "estimated_minutes": 3,
+      "hint": "Use the search box in the column list. Regarding links an activity to another record, such as an account.",
+      "answer": "Type reads Activity. Task columns include Subject (its primary column), Regarding, Due Date, Duration, and Activity Status. Phone Call, Email, and Appointment share these, so activities can be listed together."
+    },
+    {
+      "id": "find-type-dropdown",
+      "type": "task",
+      "instruction": "Back in Tables, click New table, then Set advanced properties. In the panel, expand Advanced options and open the Type dropdown. Look only, then click Cancel.",
+      "why": "This dropdown is the one place a table's type is chosen, and the choice locks once the table is saved.",
+      "estimated_minutes": 3,
+      "hint": "The menu item may read Table (advanced properties). Advanced options is a collapsed section near the bottom of the panel, so scroll down.",
+      "answer": "Type lists Standard, Activity, Virtual, and Elastic. Virtual shows data from an external source without copying it in. Elastic suits huge datasets, tens of millions of rows. Cancel closes the panel without creating anything.",
+      "warning": "Do not save here. A table's type can never be changed after the table is created."
+    },
+    {
+      "id": "match-table-type",
+      "type": "task",
+      "instruction": "On paper, match each need to a table type: logging client calls, 40 million sensor readings, live SQL data you will not copy, a product catalog.",
+      "why": "Picking the right type up front matters because you cannot switch a table to another type later.",
+      "estimated_minutes": 2,
+      "hint": "For each one ask: is it time-based, massive, stored somewhere else, or ordinary business data?",
+      "answer": "Client calls: Activity. Sensor readings: Elastic. Live SQL data: Virtual. Product catalog: Standard."
+    },
+    {
+      "id": "check-existing-first",
+      "type": "task",
+      "instruction": "Before building, search Tables for interaction, then glance at the Phone Call and Appointment tables. Decide: does a standard table already do what you need?",
+      "why": "Microsoft advises checking standard tables first so you do not duplicate functionality that already exists.",
+      "estimated_minutes": 3,
+      "hint": "Compare what each table tracks. One kind of activity, or a mix of calls, emails, and meetings?",
+      "answer": "No Interaction table exists. Phone Call and Appointment each cover one kind of activity. For practice you will build one custom table for calls, emails, and meetings. In real projects, reuse standard tables whenever they fit."
+    },
+    {
+      "id": "start-new-table",
+      "type": "task",
+      "instruction": "In Tables, click New table, then Set advanced properties. On the Properties tab, type Interaction as the Display name and check that Plural name fills in as Interactions.",
+      "why": "Display names are what users see in apps, and unlike schema names you can change them later.",
+      "estimated_minutes": 3,
+      "hint": "Skip Start with Copilot and Start from blank. You want the side panel that has Properties and Primary column tabs.",
+      "answer": "The New table panel opens with Properties and Primary column tabs. Display name: Interaction. Plural name: Interactions. Leave Enable attachments unchecked for now and do not save yet."
+    },
+    {
+      "id": "set-type-standard",
+      "type": "task",
+      "instruction": "Still in the panel, expand Advanced options. Confirm Type is Standard and Record ownership is User or team. Write down the Schema name it generated.",
+      "why": "Schema name, type, and ownership lock in when you save, so checking them now prevents a rebuild later.",
+      "estimated_minutes": 3,
+      "hint": "Advanced options is a collapsible section at the bottom of the Properties tab. Scroll down if Type is not visible.",
+      "answer": "Schema name looks like cr123_Interaction, starting with your publisher prefix. Type: Standard. Record ownership: User or team. Keep these defaults.",
+      "warning": "After you save, the schema name, table type, and ownership can never change. Fix any typos now."
+    },
+    {
+      "id": "primary-column-concept",
+      "type": "task",
+      "instruction": "Click the Primary column tab and read its default Display name. Predict: where will users see this column's value? Write your guess, then check the answer.",
+      "why": "Every table has exactly one primary name column, the text that identifies each record to users.",
+      "estimated_minutes": 2,
+      "hint": "Think back to Account and its Account Name column. Where did that name appear?",
+      "answer": "The default is Name. Its value is each record's display text: shown in lookups when someone picks a record, as the lead column in views, and as the record title on forms."
+    },
+    {
+      "id": "rename-primary-subject",
+      "type": "task",
+      "instruction": "On the Primary column tab, change the Display name from Name to Subject. Then click Save at the bottom of the panel.",
+      "why": "A meaningful primary name like Subject makes each interaction easy to recognize in lookups and lists.",
+      "estimated_minutes": 3,
+      "hint": "The Primary column tab sits next to Properties at the top of the panel. Saving can take a minute, so keep the tab open.",
+      "answer": "Display name reads Subject and its schema name updates to match. After Save, the Interaction table page opens and lists Subject as the primary column.",
+      "warning": "Set the primary column before saving. Afterward it is locked in this panel, and its schema name is permanent."
+    },
+    {
+      "id": "add-date-column",
+      "type": "task",
+      "instruction": "On the Interaction table page, under Schema click Columns, then New column. Display name: Date. Data type: Date only. Click Save.",
+      "why": "Data types control how values are stored and checked; a Date only column holds a date without a time.",
+      "estimated_minutes": 4,
+      "hint": "Date only may sit inside Date and time in the Data type list. If you see Done instead of Save, click Done, then Save table.",
+      "answer": "New column panel: Display name Date, Data type Date only. After Save, Date appears in the list beside system columns like Created On and Owner that Dataverse added for you.",
+      "warning": "Check the data type before saving. Dataverse will not let you change it afterward."
+    },
+    {
+      "id": "add-type-choice-column",
+      "type": "task",
+      "instruction": "Click New column again. Display name: Type. Data type: Choice. Add three choices: Call, Email, Meeting. Click Save.",
+      "why": "A Choice column limits answers to a fixed list, which keeps data clean and easy to filter.",
+      "estimated_minutes": 5,
+      "hint": "Pick Choice, not Choices, which allows many answers. Look for a New choice or plus button below the first label to add more.",
+      "answer": "Data type Choice, one answer per record. Labels Call, Email, and Meeting, each added with New choice. After Save, Type appears in Columns with the data type Choice."
+    },
+    {
+      "id": "add-notes-column",
+      "type": "task",
+      "instruction": "Click New column again. Display name: Notes. Data type: Multiple lines of text, with Plain text format. Click Save.",
+      "why": "Multiple lines of text holds long free text, far more than a single-line Text column allows.",
+      "estimated_minutes": 3,
+      "hint": "It might be labeled Multiline Text. Text area looks similar but is single-line text underneath, capped at 4,000 characters.",
+      "answer": "Data type Multiple lines of text (or Multiline Text), format Plain text. After Save, Notes appears in Columns. It holds about a million characters versus 4,000 for Text."
+    },
+    {
+      "id": "add-first-record",
+      "type": "task",
+      "instruction": "On the Interaction table page, find the columns and data grid. Add one row: Subject: Intro call, Date: today, Type: Call, plus a short note in Notes.",
+      "why": "Adding a real row proves your columns work and shows exactly how data lands in the table.",
+      "estimated_minutes": 5,
+      "hint": "If the grid will not let you type, click Edit on the command bar to open the table designer and add the row there.",
+      "answer": "In the Interaction columns and data grid, click New row or an empty row, fill all four columns, then click away to save. Columns hidden? Click the plus N more link. The row remains after a refresh."
+    },
+    {
+      "id": "check-view-primary",
+      "type": "task",
+      "instruction": "Under Data experiences click Views, then open Active Interactions. Which column appears first, and what text identifies your new row?",
+      "why": "Seeing the primary column lead the default view shows why every table needs a clear, meaningful primary name.",
+      "estimated_minutes": 3,
+      "hint": "Views lives in the Data experiences area of the table page. Custom tables get default views such as Active Interactions and Inactive Interactions.",
+      "answer": "Active Interactions shows Subject first, then Created On, and your row reads Intro call. Any lookup to Interaction will display that same Subject text. Close the view designer without saving."
+    },
+    {
+      "id": "who-can-see-rows",
+      "type": "task",
+      "instruction": "Predict: a coworker without admin rights opens an app that uses Interaction. Can they see its rows yet? Write your answer and where access is granted, then check.",
+      "why": "New custom tables are locked down; security roles decide who can create, read, edit, or delete their rows.",
+      "estimated_minutes": 2,
+      "hint": "Access in Dataverse comes from roles assigned to each user. Did you give any role rights to Interaction?",
+      "answer": "Not yet. Add Interaction privileges to an existing or new security role: Power Platform admin center, your environment, Settings, Users + permissions, Security roles. As a System Administrator you already have access."
+    },
+    {
+      "id": "enable-attachments",
+      "type": "task",
+      "instruction": "Open the Interaction table and click Properties on the command bar. Check Enable attachments (including notes and files), then click Save.",
+      "why": "Attachments let users add notes and files to each record, such as meeting slides or call summaries.",
+      "estimated_minutes": 3,
+      "hint": "Properties may hide under the three dots on the command bar. The checkbox is in the main area of the panel, above Advanced options.",
+      "answer": "Edit table panel: check Enable attachments (including notes and files), then Save. Reopen Properties: the box stays checked and is greyed out. That shows it cannot be undone.",
+      "warning": "Irreversible. Once attachments are enabled on a table, they can never be turned off again."
+    },
+    {
+      "id": "licensing-custom",
+      "type": "task",
+      "instruction": "Look at your Interaction table: custom, no plug-ins. Write down which license an app user needs to work with its rows. Then check the answer.",
+      "why": "Licensing depends on which tables an app uses, and the app users, not the maker, must hold the licenses.",
+      "estimated_minutes": 3,
+      "hint": "Most Dataverse tables, standard or custom, sit in the same basic licensing tier.",
+      "answer": "A Power Apps or Power Automate license, per app or per user. A Dynamics 365 license also covers custom tables and standard tables like Account and Contact."
+    },
+    {
+      "id": "licensing-complex",
+      "type": "task",
+      "instruction": "Imagine a developer adds a code plug-in or a real-time workflow to Interaction. Write down: could the license requirement change? Then check the answer.",
+      "why": "Complex server-side logic can change license needs for apps already in use, so check before adding it.",
+      "estimated_minutes": 3,
+      "hint": "Think about logic that runs on the server every time a row is saved.",
+      "answer": "Yes, it can. Plug-ins and real-time workflows make Interaction a complex table, so every app user must hold a qualifying Power Apps or Power Automate license. Background workflows do not count as complex logic."
+    },
+    {
+      "id": "licensing-restricted",
+      "type": "task",
+      "instruction": "Search Tables for Knowledge Article and Goal; they may not exist everywhere. Write down which license is needed to create or edit their rows, and to only read them.",
+      "why": "Restricted tables belong to Dynamics 365 apps, so writing to them requires a Dynamics 365 license.",
+      "estimated_minutes": 4,
+      "hint": "Think about which product these tables come from. Entitlement, Case, and Work Order are in the same group.",
+      "answer": "They are restricted tables. Creating, updating, or deleting rows needs a Dynamics 365 app license. Only reading them needs just Power Apps or Power Automate. Nobody can create new restricted tables; Microsoft defines them."
+    },
+    {
+      "id": "quiz-table-type",
+      "type": "quiz",
+      "instruction": "You need to store 50 million sensor readings. A colleague says to create a Standard table now and switch it to Elastic later if needed. Is that a good plan?",
+      "why": "Table type is the one decision you cannot revisit, so it must be right at creation.",
+      "estimated_minutes": 2,
+      "hint": "Think about what happened to the Type dropdown once a table was saved.",
+      "answer": "No. Choose Elastic from the start, because it is built for very large datasets. A table's type is set when it is created and cannot be changed later."
+    },
+    {
+      "id": "quiz-attachments",
+      "type": "quiz",
+      "instruction": "Your manager asks you to enable attachments on Interaction for a one-week trial and then turn them off. What do you tell them?",
+      "why": "Knowing which settings are one-way protects real environments from changes you cannot reverse.",
+      "estimated_minutes": 2,
+      "hint": "Remember what the checkbox looked like when you reopened Properties.",
+      "answer": "It cannot be a trial. Enabling attachments is irreversible: the checkbox greys out and can never be cleared. Only enable it if attachments should stay on for good."
+    },
+    {
+      "id": "quiz-licensing",
+      "type": "quiz",
+      "instruction": "An app lets users create Knowledge Article rows and also edit your custom Interaction table. Which license do the app users need, and why?",
+      "why": "Licensing follows the most restricted table an app writes to, so one table can change everyone's license.",
+      "estimated_minutes": 2,
+      "hint": "Which of the two tables belongs to a Dynamics 365 app?",
+      "answer": "A Dynamics 365 app license, because Knowledge Article is a restricted table and the app writes to it. Interaction on its own would need only a Power Apps or Power Automate license."
+    }
+  ]
+}
