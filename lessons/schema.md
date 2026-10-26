@@ -21,10 +21,32 @@ The panel is built for ADHD-friendly focus:
 
 - One JSON file per module in `lessons/`, named after the lesson `id`:
   `lessons/<id>.json` (for example `lessons/dataverse-tables.json`).
-- The UI loads a lesson from the path in the `LESSON_URL` constant near the top of
-  `panel.js`. To ship a different module, add its JSON file here and point
-  `LESSON_URL` at it.
-- The file must be valid JSON (UTF-8, no comments, no trailing commas).
+- `lessons/index.json` lists the lessons of the course in order. The panel loads it
+  first (the `COURSE_URL` constant near the top of `panel.js`), then every lesson it
+  lists. A lesson that is not in `index.json` is never shown.
+- Files must be valid JSON (UTF-8, no comments, no trailing commas).
+
+## The course list: lessons/index.json
+
+```json
+{
+  "schema_version": 1,
+  "id": "get-started-dataverse",
+  "title": "Get started using Dataverse",
+  "source": "https://learn.microsoft.com/en-us/training/paths/get-started-cds/",
+  "lessons": [
+    { "id": "dataverse-tables", "title": "Manage tables in Dataverse", "file": "dataverse-tables.json" }
+  ]
+}
+```
+
+| Field | Rule |
+|---|---|
+| `id`, `title`, `source` | The Microsoft Learn learning path this course follows. `title` is shown above the lesson list. |
+| `lessons` | In course order. The lesson list and the Next lesson button follow this order. |
+| `lessons[].id` | The lesson's `id`. Progress is saved under it, so never rename it. |
+| `lessons[].title` | Exactly the lesson file's `title`. |
+| `lessons[].file` | Always `<id>.json`. |
 
 ## Top-level fields
 
@@ -92,8 +114,9 @@ up literally. Do not use markdown or HTML: no `*`, `**`, `_ _`, backticks, `#`,
    attachments, deleting data), and only then, so warnings keep their weight.
 8. Be accurate to the Learn module. If a detail cannot be verified, keep the claim
    general rather than inventing specifics.
-9. Aim for 18 to 25 steps, 1 to 5 minutes each, about 60 to 80 minutes in total
-   (two or three 25-minute focus sessions).
+9. Scale the lesson to the module: about 1 to 1.3 times the module's listed time.
+   Long modules: 18 to 25 steps. Modules of 35 minutes or less: 10 to 15 steps.
+   Each step 1 to 5 minutes.
 
 ## Why the limits exist
 
@@ -166,10 +189,11 @@ every learner's saved progress for that step.** So:
 - [ ] Every step has `id`, `type`, `instruction`, `why`, `estimated_minutes`, `hint`, `answer`; `warning` only where needed.
 - [ ] Step ids are unique, kebab-case, and none were renamed from a published version.
 - [ ] Word limits hold: instruction under 40, why one sentence of 25 or fewer, hint 30, answer 50, warning 25.
-- [ ] `estimated_minutes` is a whole number from 1 to 10; total is about 60 to 80 minutes.
+- [ ] `estimated_minutes` is a whole number from 1 to 10; the total fits the module's length.
 - [ ] No markdown or HTML characters in any text field.
 - [ ] Every task is something to do in the real environment, not something to read.
 - [ ] The first step checks the environment; irreversible actions carry a `warning`.
 - [ ] The last 3 steps are `quiz`, and no earlier step is.
 - [ ] UI labels were checked against the current portal, with alternatives in hints.
-- [ ] `LESSON_URL` in `panel.js` points at the lesson you want to load.
+- [ ] The lesson is listed in `lessons/index.json`, in course order.
+- [ ] `node tools/validate-lessons.js` prints PASS.

@@ -26,10 +26,17 @@
         </button>
       </div>
 
-      <!-- Quiet stats. The numbers sit in their own elements so they are easy to read and test. -->
-      <div class="stats">
-        <span><strong id="streak">0</strong> <span id="streak-label">day streak</span></span>
-        <span><strong id="sessions">0</strong> <span id="sessions-label">sessions</span></span>
+      <div class="topbar-end">
+        <!-- Quiet stats. The numbers sit in their own elements so they are easy to read and test. -->
+        <div class="stats">
+          <span><strong id="streak">0</strong> <span id="streak-label">day streak</span></span>
+          <span><strong id="sessions">0</strong> <span id="sessions-label">sessions</span></span>
+        </div>
+        <!-- Opens the list of every lesson in the course. -->
+        <button id="lessons-btn" class="icon-btn" type="button" aria-label="All lessons" title="All lessons"
+                aria-controls="lesson-list" aria-expanded="false" disabled>
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 5.5h2.5V8H4zm5 0h11V8H9zM4 10.75h2.5v2.5H4zm5 0h11v2.5H9zM4 16h2.5v2.5H4zm5 0h11v2.5H9z"/></svg>
+        </button>
       </div>
     </header>
 
@@ -63,15 +70,25 @@
         <h2 class="card-title">Lesson complete</h2>
         <p id="complete-lesson-title" class="muted"></p>
         <p id="quiz-score-line" class="score">Quiz score <strong id="quiz-score">0/0</strong></p>
+        <button id="next-lesson-btn" type="button" class="btn btn-primary" hidden>Next lesson</button>
+        <p id="course-done" class="muted" hidden>That was the last lesson in this course. Well done.</p>
         <p class="muted">Restarting clears the steps for this lesson only. Your streak and sessions stay.</p>
         <button id="restart-btn" type="button" class="btn btn-secondary">Restart lesson</button>
+      </section>
+
+      <!-- Every lesson in the course. Opened from the list button in the header. -->
+      <section id="lesson-list" class="card list-card" aria-labelledby="lesson-list-title" hidden>
+        <p id="course-title" class="eyebrow"></p>
+        <h2 id="lesson-list-title" class="card-title">Lessons</h2>
+        <ol id="lesson-items" class="lesson-items"></ol>
+        <button id="lessons-close-btn" type="button" class="btn btn-secondary">Back to the lesson</button>
       </section>
 
       <!-- Shown if the lesson file can't be loaded. -->
       <section id="error" class="card center-card" role="alert" hidden>
         <p class="eyebrow">Something went wrong</p>
         <h2 class="card-title">The lesson didn't load</h2>
-        <p class="muted">Sidekick couldn't read its lesson file. Your progress, streak, and timer are safe.</p>
+        <p class="muted">Sidekick couldn't read its lesson files. Your progress, streak, and timer are safe.</p>
         <p id="error-detail" class="error-detail"></p>
         <button id="retry-btn" type="button" class="btn btn-secondary">Try again</button>
       </section>

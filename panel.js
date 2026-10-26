@@ -9,10 +9,10 @@
       3. State           what we save, plus a little on-screen-only state
       4. Page elements   the HTML elements we update
       5. Helpers         dates, clock text, small utilities
-      6. Lesson          fetch and tidy the lesson JSON
+      6. Lessons         fetch the course list and every lesson in it
       7. Rendering       turn state into what's on screen
       8. Auto-fit        shrink text so a step never needs scrolling
-      9. Step actions    Done, Stuck, Back, quiz scoring, restart
+      9. Step actions    Done, Stuck, Back, quiz scoring, restart, switching lessons
      10. Focus timer     start, pause, tick, end
      11. Session log     the "walk away" screen and the streak maths
      12. Keyboard        optional shortcuts
@@ -25,7 +25,8 @@
 
 // ---- 1. Settings ------------------------------------------------------------
 
-const LESSON_URL = 'lessons/dataverse-tables.json';
+const COURSE_URL = 'lessons/index.json'; // the list of lessons, in course order
+const LESSONS_DIR = 'lessons/';           // where each lesson's own JSON file lives
 const SESSION_MINUTES = 25;
 const SESSION_MS = SESSION_MINUTES * 60 * 1000;
 const MIN_NOTE_CHARS = 3;     // a session note needs at least this many non-space characters
@@ -72,6 +73,7 @@ async function save(...keys) {
 
 // Saved state. Each key is stored under the same name in chrome.storage.local.
 const state = {
+  currentLessonId: null, // the lesson on screen, e.g. 'dataverse-tables'
   progress: {},        // { [lessonId]: { index, done: [stepId], quiz: { [stepId]: 'right' | 'wrong' } } }
   stats: newStats(),   // { sessionsCompleted, streak, lastSessionDay: 'YYYY-MM-DD' | null }
   timer: newTimer(),   // { status, endsAt, remainingMs, stepsDoneThisSession }
@@ -80,7 +82,9 @@ const state = {
 
 // On-screen-only state. Forgotten when the panel closes, on purpose.
 const view = {
-  lesson: null,        // the loaded lesson
+  course: null,        // lessons/index.json: the course title and its lesson list
+  lessons: [],         // every lesson, fully loaded, in course order
+  showLessons: false,  // the lesson list is open
   error: null,         // message for the error card
   hintShown: false,    // hint and answer reset every time the step changes
   answerShown: false,
@@ -112,6 +116,7 @@ const el = {
   streak: $('streak'),
   sessions: $('sessions'),
   sessionsLabel: $('sessions-label'),
+  lessonsBtn: $('lessons-btn'),
   progressBar: $('progress-bar'),
 
   stage: $('stage'),
@@ -131,7 +136,14 @@ const el = {
   completeTitle: $('complete-lesson-title'),
   quizScoreLine: $('quiz-score-line'),
   quizScore: $('quiz-score'),
+  nextLessonBtn: $('next-lesson-btn'),
+  courseDone: $('course-done'),
   restartBtn: $('restart-btn'),
+
+  lessonList: $('lesson-list'),
+  courseTitle: $('course-title'),
+  lessonItems: $('lesson-items'),
+  lessonsCloseBtn: $('lessons-close-btn'),
 
   error: $('error'),
   errorDetail: $('error-detail'),
@@ -205,28 +217,63 @@ function showText(node, text) {
 }
 
 
-// ---- 6. Lesson --------------------------------------------------------------
+// ---- 6. Lessons -------------------------------------------------------------
+// lessons/index.json lists the lessons in course order, and each lesson is its
+// own JSON file (see lessons/schema.md). They are small local files, so we load
+// all of them at start-up: switching lessons is then instant.
 
-async function loadLesson() {
+async function fetchJson(url) {
+  let response;
   try {
-    const response = await fetch(LESSON_URL);
-    if (!response.ok) throw new Error(`${LESSON_URL} answered with HTTP ${response.status}.`);
-    view.lesson = tidyLesson(await response.json());
-    view.error = null;
-    // Saved progress may come from an older version of the lesson: make it fit.
-    const id = view.lesson.id;
-    state.progress[id] = tidyProgress(state.progress[id], view.lesson.steps.length);
-  } catch (err) {
-    view.lesson = null;
-    view.error = err instanceof SyntaxError ? `${LESSON_URL} is not valid JSON.` : err.message;
-    console.error('Sidekick could not load the lesson:', err);
+    response = await fetch(url);
+  } catch {
+    // Inside an extension a missing file doesn't answer 404: the fetch just fails.
+    throw new Error(`${url} could not be found.`);
+  }
+  if (!response.ok) throw new Error(`${url} answered with HTTP ${response.status}.`);
+  try {
+    return await response.json();
+  } catch {
+    throw new Error(`${url} is not valid JSON.`);
   }
 }
 
+async function loadCourse() {
+  try {
+    const course = tidyCourse(await fetchJson(COURSE_URL));
+    const lessons = await Promise.all(course.lessons.map(async (entry) =>
+      tidyLesson(await fetchJson(LESSONS_DIR + entry.file), entry)));
+
+    view.course = course;
+    view.lessons = lessons;
+    view.error = null;
+    // First visit, or the saved lesson was removed: start with the first lesson.
+    if (!findLesson(state.currentLessonId)) state.currentLessonId = lessons[0].id;
+    // Saved progress may come from an older version of a lesson: make it fit.
+    for (const lesson of lessons) {
+      state.progress[lesson.id] = tidyProgress(state.progress[lesson.id], lesson.steps.length);
+    }
+  } catch (err) {
+    view.course = null;
+    view.lessons = [];
+    view.error = err.message;
+    console.error('Sidekick could not load the lessons:', err);
+  }
+}
+
+function tidyCourse(raw) {
+  const entries = isObject(raw) && Array.isArray(raw.lessons) ? raw.lessons : [];
+  const lessons = entries.filter((entry) =>
+    isObject(entry) && typeof entry.id === 'string' && typeof entry.file === 'string');
+  if (lessons.length === 0) throw new Error(`${COURSE_URL} lists no lessons.`);
+  return { title: raw.title || 'Lessons', lessons };
+}
+
 // Keep only usable steps and fill in gaps, so the rest of the code can trust the data.
-function tidyLesson(raw) {
+// The id always comes from index.json, because saved progress is filed under it.
+function tidyLesson(raw, entry) {
   if (!isObject(raw) || !Array.isArray(raw.steps)) {
-    throw new Error('The lesson file has no "steps" list.');
+    throw new Error(`${entry.file} has no "steps" list.`);
   }
   const steps = raw.steps
     .filter((step) => isObject(step) && typeof step.instruction === 'string' && step.instruction.trim())
@@ -235,8 +282,8 @@ function tidyLesson(raw) {
       id: typeof step.id === 'string' && step.id ? step.id : `step-${i + 1}`,
       type: step.type === 'quiz' ? 'quiz' : 'task',
     }));
-  if (steps.length === 0) throw new Error('The lesson file has no steps.');
-  return { ...raw, id: String(raw.id || 'lesson'), title: raw.title || 'Lesson', steps };
+  if (steps.length === 0) throw new Error(`${entry.file} has no steps.`);
+  return { ...raw, id: entry.id, title: raw.title || entry.title || 'Lesson', steps };
 }
 
 function tidyProgress(raw, stepCount) {
@@ -248,15 +295,31 @@ function tidyProgress(raw, stepCount) {
   };
 }
 
+function findLesson(lessonId) {
+  return view.lessons.find((lesson) => lesson.id === lessonId) || null;
+}
+
+// The lesson on screen, or null while loading (or if loading failed).
+function activeLesson() {
+  return findLesson(state.currentLessonId);
+}
+
+// The lesson after this one in the course, or null after the last one.
+function nextLesson() {
+  const i = view.lessons.indexOf(activeLesson());
+  return i >= 0 ? view.lessons[i + 1] || null : null;
+}
+
 function lessonProgress() {
-  return state.progress[view.lesson.id];
+  return state.progress[state.currentLessonId];
 }
 
 // The step on screen, or null when there's no lesson or it's finished.
 // (index === steps.length means "lesson complete".)
 function currentStep() {
-  if (!view.lesson) return null;
-  return view.lesson.steps[lessonProgress().index] || null;
+  const lesson = activeLesson();
+  if (!lesson) return null;
+  return lesson.steps[lessonProgress().index] || null;
 }
 
 
@@ -299,39 +362,51 @@ function visibleStreak(stats, now) {
 }
 
 function renderProgress() {
-  let doneCount = 0;
-  let total = 0;
-  if (view.lesson) {
-    const done = new Set(lessonProgress().done);
-    total = view.lesson.steps.length;
-    doneCount = view.lesson.steps.filter((step) => done.has(step.id)).length;
-  }
+  const lesson = activeLesson();
+  const total = lesson ? lesson.steps.length : 0;
+  const doneCount = lesson ? countDone(lesson) : 0;
   const percent = total ? (doneCount / total) * 100 : 0;
   el.progressBar.style.width = `${percent}%`;
   el.progressBar.setAttribute('aria-valuenow', String(Math.round(percent)));
   el.progressBar.setAttribute('aria-valuetext', `${doneCount} of ${total} steps done`);
 }
 
-// The middle of the panel: loading text, error card, a step, or "lesson complete".
+// Steps of a lesson that are marked done (ignoring ids a newer lesson version dropped).
+function countDone(lesson) {
+  const done = new Set(state.progress[lesson.id].done);
+  return lesson.steps.filter((step) => done.has(step.id)).length;
+}
+
+// What the middle of the panel shows. Exactly one of these at a time.
+function mainMode() {
+  if (view.showLessons && view.lessons.length) return 'list';
+  if (view.error) return 'error';
+  if (!activeLesson()) return 'loading';
+  return currentStep() ? 'step' : 'complete';
+}
+
 function renderMain() {
-  const step = currentStep();
-  const finished = Boolean(view.lesson) && !step;
+  const mode = mainMode();
+  el.loading.hidden = mode !== 'loading';
+  el.error.hidden = mode !== 'error';
+  el.stepView.hidden = mode !== 'step';
+  el.lessonComplete.hidden = mode !== 'complete';
+  el.lessonList.hidden = mode !== 'list';
+  el.actions.hidden = mode !== 'step' && mode !== 'complete';
 
-  el.loading.hidden = Boolean(view.lesson || view.error);
-  el.error.hidden = !view.error;
-  el.stepView.hidden = !step;
-  el.lessonComplete.hidden = !finished;
-  el.actions.hidden = !view.lesson;
+  el.lessonsBtn.disabled = view.lessons.length === 0;
+  el.lessonsBtn.setAttribute('aria-expanded', String(mode === 'list'));
 
-  if (view.error) setText(el.errorDetail, view.error);
-  if (step) renderStep(step);
-  if (finished) renderLessonComplete();
-  if (view.lesson) renderActions(step);
+  if (mode === 'error') setText(el.errorDetail, view.error);
+  if (mode === 'step') renderStep(currentStep());
+  if (mode === 'complete') renderLessonComplete();
+  if (mode === 'list') renderLessonList();
+  if (mode === 'step' || mode === 'complete') renderActions(currentStep());
 }
 
 function renderStep(step) {
   const { index, done } = lessonProgress();
-  setText(el.stepCounter, `Step ${index + 1} of ${view.lesson.steps.length}`);
+  setText(el.stepCounter, `Step ${index + 1} of ${activeLesson().steps.length}`);
   showText(el.stepMinutes, step.estimated_minutes ? `~${step.estimated_minutes} min` : '');
   el.stepQuizChip.hidden = step.type !== 'quiz';
   el.stepDoneChip.hidden = !done.includes(step.id);
@@ -344,12 +419,55 @@ function renderStep(step) {
 }
 
 function renderLessonComplete() {
+  const lesson = activeLesson();
   const { quiz } = lessonProgress();
-  const quizSteps = view.lesson.steps.filter((step) => step.type === 'quiz');
+  const quizSteps = lesson.steps.filter((step) => step.type === 'quiz');
   const right = quizSteps.filter((step) => quiz[step.id] === 'right').length;
-  setText(el.completeTitle, view.lesson.title);
+  setText(el.completeTitle, lesson.title);
   el.quizScoreLine.hidden = quizSteps.length === 0;
   setText(el.quizScore, `${right}/${quizSteps.length}`);
+
+  // Point straight at the next lesson, so there's no decision to make.
+  const next = nextLesson();
+  el.nextLessonBtn.hidden = !next;
+  el.courseDone.hidden = Boolean(next);
+  if (next) setText(el.nextLessonBtn, `Next lesson: ${next.title}`);
+}
+
+// The lesson list: one button per lesson, with how far along it is.
+// Built with createElement (not innerHTML), like all lesson text.
+function renderLessonList() {
+  setText(el.courseTitle, view.course.title);
+  el.lessonItems.replaceChildren(...view.lessons.map((lesson, i) => {
+    const title = document.createElement('span');
+    title.className = 'lesson-item-title';
+    title.textContent = `${i + 1}. ${lesson.title}`;
+
+    const status = document.createElement('span');
+    status.className = 'lesson-item-status';
+    status.textContent = lessonStatus(lesson);
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'lesson-item';
+    button.dataset.lessonId = lesson.id;
+    if (lesson.id === state.currentLessonId) button.setAttribute('aria-current', 'true');
+    button.append(title, status);
+
+    const item = document.createElement('li');
+    item.append(button);
+    return item;
+  }));
+}
+
+// "Complete", "5 of 24 steps done", or "24 steps, about 70 min" for a fresh lesson.
+function lessonStatus(lesson) {
+  const total = lesson.steps.length;
+  const doneCount = countDone(lesson);
+  if (doneCount === total || state.progress[lesson.id].index >= total) return 'Complete';
+  if (doneCount > 0) return `${doneCount} of ${total} steps done`;
+  const minutes = lesson.steps.reduce((sum, step) => sum + (Number(step.estimated_minutes) || 0), 0);
+  return `${total} steps, about ${minutes} min`;
 }
 
 // Which buttons show depends on the step type:
@@ -506,7 +624,7 @@ function onScore(result) {
 }
 
 function onBack() {
-  if (!view.lesson || lessonIsBlocked()) return;
+  if (!activeLesson() || lessonIsBlocked()) return;
   const { index } = lessonProgress();
   if (index === 0) return;
   goToStep(index - 1);
@@ -515,17 +633,46 @@ function onBack() {
 
 // Clears this lesson's steps and quiz answers. Stats, streak and timer are untouched.
 function onRestart() {
-  if (!view.lesson || lessonIsBlocked()) return;
-  state.progress[view.lesson.id] = newLessonProgress();
+  if (!activeLesson() || lessonIsBlocked()) return;
+  state.progress[state.currentLessonId] = newLessonProgress();
   goToStep(0);
   save('progress');
 }
 
 async function onRetry() {
   el.retryBtn.disabled = true;
-  await loadLesson();
+  await loadCourse();
   el.retryBtn.disabled = false;
   render();
+}
+
+// Switch to another lesson. Each lesson keeps its own place, so you land on
+// the step where you left it (or its "Lesson complete" card).
+function openLesson(lessonId) {
+  if (!findLesson(lessonId) || lessonIsBlocked()) return;
+  state.currentLessonId = lessonId;
+  view.showLessons = false;
+  goToStep(lessonProgress().index);
+  save('currentLessonId');
+}
+
+function onNextLesson() {
+  const next = nextLesson();
+  if (next) openLesson(next.id);
+}
+
+function onLessonsToggle() {
+  if (view.lessons.length === 0 || lessonIsBlocked()) return;
+  view.showLessons = !view.showLessons;
+  render();
+  // Put keyboard focus somewhere useful in the view that just opened.
+  if (view.showLessons) el.lessonItems.querySelector('[aria-current="true"]')?.focus();
+  else el.lessonsBtn.focus();
+}
+
+function onLessonItemClick(event) {
+  const button = event.target.closest('button[data-lesson-id]');
+  if (button) openLesson(button.dataset.lessonId);
 }
 
 // Mark a step done, count it toward this session (first time only), move on.
@@ -540,7 +687,7 @@ function completeStep(step) {
 }
 
 function goToStep(index) {
-  lessonProgress().index = clamp(index, 0, view.lesson.steps.length);
+  lessonProgress().index = clamp(index, 0, activeLesson().steps.length);
   view.hintShown = false;
   view.answerShown = false;
   render();
@@ -679,7 +826,8 @@ function tidyStats(raw) {
 
 
 // ---- 12. Keyboard shortcuts -------------------------------------------------
-// Enter = Done (or Reveal answer on a quiz), S = Stuck, B or Left arrow = Back.
+// Enter = Done (or Reveal answer on a quiz), S = Stuck, B or Left arrow = Back,
+// Escape = close the lesson list.
 // Ignored while typing, while the session overlay is up, and for held-down keys.
 
 function onKeyDown(event) {
@@ -693,6 +841,10 @@ function onKeyDown(event) {
     return;
   }
   if (lessonIsBlocked()) return;
+  if (view.showLessons) {
+    if (event.key === 'Escape') onLessonsToggle();
+    return; // the step shortcuts don't apply while the list is open
+  }
 
   let button = null;
   const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
@@ -716,7 +868,8 @@ function onKeyDown(event) {
 
 async function restoreState() {
   try {
-    const saved = await storage.get(['progress', 'stats', 'timer', 'sessionLog']);
+    const saved = await storage.get(['currentLessonId', 'progress', 'stats', 'timer', 'sessionLog']);
+    state.currentLessonId = typeof saved.currentLessonId === 'string' ? saved.currentLessonId : null;
     state.progress = isObject(saved.progress) ? saved.progress : {};
     state.stats = tidyStats(saved.stats);
     state.timer = tidyTimer(saved.timer);
@@ -743,6 +896,10 @@ function wireEvents() {
   el.rightBtn.addEventListener('click', () => onScore('right'));
   el.wrongBtn.addEventListener('click', () => onScore('wrong'));
   el.restartBtn.addEventListener('click', onRestart);
+  el.nextLessonBtn.addEventListener('click', onNextLesson);
+  el.lessonsBtn.addEventListener('click', onLessonsToggle);
+  el.lessonsCloseBtn.addEventListener('click', onLessonsToggle);
+  el.lessonItems.addEventListener('click', onLessonItemClick);
   el.retryBtn.addEventListener('click', onRetry);
   el.logNote.addEventListener('input', onNoteInput);
   el.logForm.addEventListener('submit', onLogSubmit);
@@ -758,7 +915,7 @@ async function start() {
   wireEvents();
   render();             // timer and stats appear while the lesson loads
   setInterval(tick, 250);
-  await loadLesson();
+  await loadCourse();
   render();
 }
 

@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "id": "get-started-dataverse",
+  "title": "Get started using Dataverse",
+  "source": "https://learn.microsoft.com/en-us/training/paths/get-started-cds/",
+  "lessons": [
+    { "id": "dataverse-tables", "title": "Manage tables in Dataverse", "file": "dataverse-tables.json" }
+  ]
+}

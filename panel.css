@@ -3,7 +3,7 @@
    -----------------------------------------------------------------------------
    The panel is one full-height column:
 
-       header (timer + stats)
+       header (timer, stats, lessons button)
        progress bar
        step card   <- takes all the leftover height
        buttons
@@ -230,6 +230,12 @@ input {
   display: none;
 }
 
+.topbar-end {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .stats {
   display: flex;
   flex-direction: column;
@@ -302,10 +308,80 @@ input {
   line-height: 1.2;
 }
 
+/* Buttons in these cards keep their natural height (no growing to fill). */
+.center-card .btn {
+  flex: none;
+}
+
+/* "Next lesson: <long module title>" can wrap onto two lines. */
+.center-card .btn-primary {
+  padding-block: 10px;
+}
+
 .error-detail {
   font-family: ui-monospace, Consolas, monospace;
   font-size: 0.875rem;
   overflow-wrap: anywhere;
+}
+
+
+/* ---- Lesson list ---------------------------------------------------------
+   The one place that may scroll: a course can have more lessons than fit.
+   A single step still never scrolls. */
+
+.list-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.list-card > .btn {
+  flex: none;
+}
+
+.lesson-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lesson-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 12px;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  text-align: left;
+  cursor: pointer;
+}
+
+.lesson-item:hover {
+  border-color: var(--border-strong);
+}
+
+/* The lesson you are on right now. */
+.lesson-item[aria-current="true"] {
+  border-color: var(--primary);
+}
+
+.lesson-item-title {
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.lesson-item-status {
+  font-size: 0.875rem;
+  color: var(--muted);
 }
 
 

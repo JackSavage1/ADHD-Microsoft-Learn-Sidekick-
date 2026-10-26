@@ -9,6 +9,7 @@ An ADHD-friendly learning companion for Microsoft Power Platform. Sidekick lives
 - **Stuck** shows a hint. Press it again to see the answer.
 - **25-minute countdown**, always visible. At zero, a full-panel "Session complete, walk away" screen asks you to log what you got done before you can continue.
 - **Quiz steps** at the end: reveal the answer, then score yourself right or wrong.
+- **A whole course.** Finish a lesson and a **Next lesson** button takes you straight to the next one. The list button (top right) shows every lesson and how far along you are.
 - **Remembers everything** (your step, streak of study days, sessions completed) in `chrome.storage.local`, so closing the panel loses nothing.
 - **Private by design.** Only two permissions (`sidePanel`, `storage`). No content scripts, no host permissions: it never reads or changes Microsoft's pages, and it makes no network requests.
 
@@ -44,18 +45,21 @@ Good to know:
 | `manifest.json` | Manifest V3 config: name, icons, the side panel, and the two permissions. |
 | `background.js` | Tiny service worker that opens the side panel when you click the toolbar icon. |
 | `panel.html` / `panel.css` / `panel.js` | The side panel UI: step card, buttons, timer, progress, quiz, session log. |
-| `lessons/dataverse-tables.json` | The lesson: "Manage tables in Dataverse", converted into hands-on steps plus 3 quiz questions. |
+| `lessons/index.json` | The course: which lessons exist, in order. |
+| `lessons/*.json` | One file per Microsoft Learn module, converted into hands-on steps plus 3 quiz questions. |
 | `lessons/schema.md` | The lesson JSON format, so new modules can be added the same way. |
 | `icons/` | Toolbar and store icons (PNG). |
 | `tools/make-icons.js` | Optional script that regenerated the icons: `node tools/make-icons.js`. Not needed to run the extension. |
+| `tools/validate-lessons.js` | Optional checker for lesson files: `node tools/validate-lessons.js`. Not needed to run the extension. |
 
 Everything is plain HTML, CSS and JavaScript: no frameworks, no libraries, no build step. Every file is meant to be read.
 
 ## Adding another Microsoft Learn module
 
 1. Write a new JSON file in `lessons/` following `lessons/schema.md`.
-2. Point `LESSON_URL` near the top of `panel.js` at it.
-3. Reload the extension in `chrome://extensions`.
+2. Add it to `lessons/index.json`, in course order.
+3. Optional: run `node tools/validate-lessons.js` to check it (needs Node.js).
+4. Reload the extension in `chrome://extensions`.
 
 ## About the project (for LinkedIn)
 
