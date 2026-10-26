@@ -1,0 +1,237 @@
+{
+  "schema_version": 1,
+  "id": "dataverse-columns",
+  "title": "Create and manage columns within a table in Dataverse",
+  "source": "https://learn.microsoft.com/en-us/training/modules/create-manage-fields-within-entity/",
+  "steps": [
+    {
+      "id": "check-environment",
+      "type": "task",
+      "instruction": "At make.powerapps.com, click the Environment picker at the top right and switch to Sidekick Dev, the Developer environment you have used since module 1.",
+      "why": "Every column, key, and AI setting in this lesson lands in the selected environment, so practice where mistakes cannot hurt real data.",
+      "estimated_minutes": 2,
+      "hint": "Sidekick Dev not listed? Pick the developer environment you reused or renamed in module 1. The Power Platform admin center shows its Type as Developer.",
+      "answer": "Top right, click Environment and choose Sidekick Dev. The page reloads with Sidekick Dev shown at the top right. Your Client, Project, and Interaction tables from earlier modules live here.",
+      "warning": "Never practice in production. Some column and key settings in this lesson can never be undone."
+    },
+    {
+      "id": "open-client-columns",
+      "type": "task",
+      "instruction": "Left menu, click Tables, then open your Client table. Under Schema click Columns. Find Client Name, City, and Phone, then find three columns you did not create.",
+      "why": "Columns define each piece of data a row stores, and Dataverse adds system columns such as Created On to every table automatically.",
+      "estimated_minutes": 3,
+      "hint": "No Tables in the left menu? Click More, then Tables. Client missing? Click the All tab and search client. A view dropdown above the column list can show all columns.",
+      "answer": "Your columns: Client Name, City, and Phone. Dataverse added system columns such as Created By, Created On, Modified On, Owner, Status, and Status Reason. You never create or maintain these yourself."
+    },
+    {
+      "id": "check-standard-email",
+      "type": "task",
+      "instruction": "Back in Tables, search for Contact and open it. Under Schema click Columns and find Email. Open it, note its Data type and Format, then click Cancel.",
+      "why": "Standard tables already ship with standard columns, so Microsoft recommends checking them before you create your own.",
+      "estimated_minutes": 3,
+      "hint": "Use the search box above the column list. Contact also has Email Address 2 and Email Address 3; pick the one called just Email.",
+      "answer": "Contact's Email is a Single line of text column with the Email format. It is a standard column: built in and ready to use. You will copy this setup on Client next."
+    },
+    {
+      "id": "browse-data-types",
+      "type": "task",
+      "instruction": "Back on Client Columns, click New column and open the Data type dropdown. Find the type you would pick for a client website, number of employees, and yearly contract value. Then click Cancel.",
+      "why": "Every column has exactly one data type, which controls what values it accepts and how apps display them.",
+      "estimated_minutes": 3,
+      "hint": "Some entries open a submenu with related types or formats, so hover over any arrow. Money values have a data type of their own.",
+      "answer": "Website: Single line of text with URL format. Employees: Whole number. Contract value: Currency. The list also offers Date and time, Choice, Yes/no, Lookup, File, Image, Formula, and Prompt. Cancel creates nothing."
+    },
+    {
+      "id": "add-email-column",
+      "type": "task",
+      "instruction": "Click New column. Display name: Email. Data type: Single line of text, with Format set to Email. Click Save.",
+      "why": "The Email format checks that values look like email addresses and shows each one as a clickable mailto link.",
+      "estimated_minutes": 4,
+      "hint": "Single line of text may open a submenu that lists Email. Older layouts show Email as its own data type. See Done instead of Save? Click Done, then Save table.",
+      "answer": "New column panel: Display name Email, Data type Single line of text, Format Email. After Save, Email appears in the Columns list with a schema name that starts with your publisher prefix, like cr123_email.",
+      "warning": "Check before saving. Once a column is saved, its data type and schema name can never change."
+    },
+    {
+      "id": "add-client-since",
+      "type": "task",
+      "instruction": "Click New column again. Display name: Client Since. Data type: Date only. Click Save.",
+      "why": "Date only holds a calendar date without a time of day, which fits facts like the day someone became a client.",
+      "estimated_minutes": 3,
+      "hint": "Date only may sit inside Date and time in the Data type list. Avoid plain Date and time, which also stores hours and minutes.",
+      "answer": "Data type Date only, found under Date and time. After Save, Client Since appears in Columns. Client now has two new custom columns: Email and Client Since."
+    },
+    {
+      "id": "fill-new-columns",
+      "type": "task",
+      "instruction": "On the Client table page, in the columns and data grid, fill Email and Client Since for all five clients. Give each a different email, such as ana@example.com.",
+      "why": "Real values prove the new columns work and give later steps, like the alternate key and AI summaries, data to use.",
+      "estimated_minutes": 5,
+      "hint": "Email or Client Since not shown in the grid? Click the plus N more link to add them. If typing is blocked, click Edit to open the table designer.",
+      "answer": "Each of the five rows shows a unique email and a date, and the emails appear as links. Keep them unique: an alternate key on Email cannot be built while two rows share a value."
+    },
+    {
+      "id": "add-prompt-column",
+      "type": "task",
+      "instruction": "Optional AI step. On Client Columns, click New column. Display name: Client Intro. Data type: Prompt. Clear Allow form fill assistance, then click Add new prompt.",
+      "why": "A prompt column runs an AI prompt on each row and stores the generated text, ready for apps, flows, and reports.",
+      "estimated_minutes": 4,
+      "hint": "No Prompt in the Data type list? This newer AI feature is not available in every region or environment. Skip this step and the next one.",
+      "answer": "Data type Prompt, with Allow form fill assistance cleared. Add new prompt opens the prompt designer. A table can have up to five prompt columns. Stuck? Click Cancel and skip ahead; nothing later depends on it."
+    },
+    {
+      "id": "write-test-prompt",
+      "type": "task",
+      "instruction": "In the prompt designer, type: Write one friendly sentence introducing this client. Use Add content to insert Client Name and City. Click Test, check the output, then Save.",
+      "why": "Testing on a real row shows what the AI will store before you save, and running a test costs no credits.",
+      "estimated_minutes": 5,
+      "hint": "Add content may appear as a plus button: pick the Client table, then a column, then Add. Leave any input already in the prompt, since it may be required.",
+      "answer": "Test picks a client and shows one sentence using its name and city. Save the prompt, then Save the column. From now on, creating a row or changing those inputs runs the prompt and uses AI credits."
+    },
+    {
+      "id": "configure-row-summary",
+      "type": "task",
+      "instruction": "Optional AI step. On the Client table page, under Customizations click Row summary. In the Prompt box, add Client Name, City, Phone, and Email, then click Test prompt.",
+      "why": "A row summary shows a Copilot-written digest of a record on forms and views, so users grasp it at a glance.",
+      "estimated_minutes": 5,
+      "hint": "Row summary greyed out? Hover for the reason: an admin must turn on Row summaries, and the table needs rows. Missing? Not every region or environment has it, so skip.",
+      "answer": "Add columns with Add or by typing a slash. Test prompt previews a summary of your most recently edited client. Click Apply to main forms to use it on all forms and views, or close without applying."
+    },
+    {
+      "id": "inspect-primary-column",
+      "type": "task",
+      "instruction": "In Client Columns, open Client Name and note its data type. Predict: could you delete this column, or turn it into a number? Write your guess, then click Cancel and check.",
+      "why": "Every table has exactly one primary column, the text value that names each row everywhere users see it.",
+      "estimated_minutes": 3,
+      "hint": "Think about where this name appears whenever someone picks a client in an app. What would they see without it?",
+      "answer": "Client Name is a Single line of text column and the table's primary column. It cannot be deleted, and its data type is locked like any saved column. Lookups, views, and form titles all show its value."
+    },
+    {
+      "id": "primary-in-lookup",
+      "type": "task",
+      "instruction": "Open your Project table. In its data grid, click the Client cell on a new row and open the lookup list. Which Client column identifies each choice? Then press Esc.",
+      "why": "Lookups display the related table's primary column, so a clear Client Name makes picking the right client easy.",
+      "estimated_minutes": 3,
+      "hint": "Client column hidden? Use the plus N more link. If the grid will not edit, click Edit for the table designer. A saved practice row is harmless.",
+      "answer": "The lookup lists each client by Client Name, the primary column of Client. That is why primary values should be meaningful and distinct enough to tell rows apart. Press Esc or close without saving."
+    },
+    {
+      "id": "check-max-length",
+      "type": "task",
+      "instruction": "Open your Email column and expand Advanced options. Find Maximum character count. Predict: if you lower it below an existing email's length, is that email cut short? Then click Cancel.",
+      "why": "Text columns have a maximum length you can adjust, so set limits that fit real data instead of squeezing it later.",
+      "estimated_minutes": 3,
+      "hint": "The field may be labeled Max length. Single line of text allows up to 4,000 characters; Multiple lines of text holds far more.",
+      "answer": "The default is usually 100. Lowering it does not truncate existing values; the new limit applies to new entries. Microsoft advises against going below data you already have. Raising it, up to 4,000, is fine."
+    },
+    {
+      "id": "data-type-locked",
+      "type": "task",
+      "instruction": "Open your City column and click the Data type dropdown. Predict: can City become a Whole number now that it holds data? Check what the list allows, then click Cancel without saving.",
+      "why": "Data types lock once a column is saved, so choosing the right type at creation avoids a rebuild later.",
+      "estimated_minutes": 3,
+      "hint": "Look for greyed-out options or a short list. The docs name one exception for text columns: a type that numbers rows automatically.",
+      "answer": "No. A saved column's data type cannot change; the dropdown is disabled or limited to text options. The only exception is converting a text column to Autonumber. To switch types, create a new column instead."
+    },
+    {
+      "id": "required-level",
+      "type": "task",
+      "instruction": "Open your Phone column and look at the Required dropdown. Predict: if Phone were Business required, could a Power Automate flow still save a client with no phone? Then click Cancel.",
+      "why": "Required levels guide app users, but only system-required columns are enforced for every save, including code and flows.",
+      "estimated_minutes": 3,
+      "hint": "Think about where the check happens: in the app form, or on the server for every request.",
+      "answer": "Options: Optional, Business recommended, Business required. Business required is enforced by apps, so a flow or API call can still save without it. Only System required is always enforced, and makers cannot set it. Use required sparingly."
+    },
+    {
+      "id": "system-columns-locked",
+      "type": "task",
+      "instruction": "In Client Columns, select the Created On row and look at the command bar for Delete column. Then select your City row and compare. Look only; do not click Delete.",
+      "why": "System columns belong to Dataverse and cannot be modified or deleted; only your custom columns can be removed.",
+      "estimated_minutes": 2,
+      "hint": "Select a row by clicking beside its name, not the name itself, so the command bar updates instead of opening the edit panel.",
+      "answer": "With Created On selected, Delete column is missing or greyed out, because it is a system column. With City selected, Delete column appears, since City is a custom column. Leave it alone."
+    },
+    {
+      "id": "delete-loses-data",
+      "type": "task",
+      "instruction": "Predict, don't click: if you deleted the Phone column, what would happen to the phone numbers already saved in your five clients? Write your answer, then check.",
+      "why": "Deleting a column also deletes all of its data, so treat it as permanent and check dependencies first.",
+      "estimated_minutes": 2,
+      "hint": "Is there any undo for a column delete? Think about what an environment backup is for.",
+      "answer": "Every phone number is lost. The only recovery is restoring the environment to a backup taken before the delete. Dataverse also blocks the delete while forms, views, or other components still depend on the column.",
+      "warning": "Do not delete Phone or any column you need. Deleted column data cannot come back without a full environment restore."
+    },
+    {
+      "id": "add-client-number",
+      "type": "task",
+      "instruction": "On Client Columns, click New column. Display name: Client Number. Data type: Autonumber. Autonumber type: String prefixed number, Prefix: CL. Keep the seed value at 1000. Click Save.",
+      "why": "The server stamps each new row with a readable, sequential ID, so nobody types numbers or creates duplicates by hand.",
+      "estimated_minutes": 4,
+      "hint": "Autonumber may sit inside the Single line of text submenu. If the panel shows a preview value, it should start with CL.",
+      "answer": "Data type Autonumber, type String prefixed number, Prefix CL, Seed value 1000. New rows will get CL-1000, CL-1001, and so on. After Save, Client Number appears in the Columns list."
+    },
+    {
+      "id": "test-autonumber",
+      "type": "task",
+      "instruction": "Predict: will your five existing clients get a Client Number? Then add a client row, Client Name: Test Client, with its own unique Email. Compare Client Number on old and new rows.",
+      "why": "Autonumber values are generated when a row is created, which explains which rows get numbers and why gaps appear.",
+      "estimated_minutes": 4,
+      "hint": "Client Number hidden? Use the plus N more link above the grid. Refresh the page if the new number does not show right away.",
+      "answer": "Only Test Client gets a number, CL-1000. Existing rows stay blank, since numbers are assigned at creation. If someone starts a row and cancels, its number is skipped, so gaps are normal."
+    },
+    {
+      "id": "create-alternate-key",
+      "type": "task",
+      "instruction": "On the Client table page, under Schema click Keys, then New key. Display name: Email Key. Check the Email column, then click Save.",
+      "why": "An alternate key makes Email unique, so imports and integrations can find a client by email instead of its hidden ID.",
+      "estimated_minutes": 4,
+      "hint": "Keys sits beside Columns and Relationships under Schema. You can also reach it through Solutions: open a solution, then Tables, Client, Keys.",
+      "answer": "New key panel: Display name Email Key, Email checked, then Save. Email Key appears in the Keys list. A background system job now builds a database index before the key takes effect.",
+      "warning": "A key cannot be edited after creation, only deleted. Its background job fails if existing rows share an Email value."
+    },
+    {
+      "id": "check-key-status",
+      "type": "task",
+      "instruction": "Wait a minute, then refresh the Keys list. Find Email Key and its status: Pending, In progress, Active, or Failed.",
+      "why": "A key only enforces uniqueness after its index job finishes and the status reads Active.",
+      "estimated_minutes": 3,
+      "hint": "No status column? The classic solution explorer lists keys with a System Job link. Small tables like Client usually finish within a few minutes.",
+      "answer": "Status reads Active, so Email is now unique across clients. Failed often means two existing rows share an email: fix the data, then delete the key and create it again, because keys cannot be edited."
+    },
+    {
+      "id": "test-duplicate-email",
+      "type": "task",
+      "instruction": "Predict, then test: in the Client data grid, change Test Client's Email to match another client's email. Can the change save? Afterward, put Test Client's own email back.",
+      "why": "Seeing the key block a duplicate shows how alternate keys protect data quality for every app, import, and flow.",
+      "estimated_minutes": 4,
+      "hint": "If the save goes through, check that Email Key shows Active. Blank emails are never compared, so the duplicate must be a real value.",
+      "answer": "No. Dataverse rejects the save with a duplicate key error. Restore Test Client's own email. Rows with an empty Email are not checked, because a key ignores blank values."
+    },
+    {
+      "id": "quiz-data-type-change",
+      "type": "quiz",
+      "instruction": "A teammate saved Client Since as Single line of text by mistake and now needs date filtering. Can they switch its data type to Date only? What should they do?",
+      "why": "Data type is one of the few column choices you cannot revisit, so it must be right at creation.",
+      "estimated_minutes": 2,
+      "hint": "Remember what the Data type dropdown allowed on your City column.",
+      "answer": "No. A saved column's data type is locked; only text to Autonumber is allowed. Create a new Date only column, copy the values over, then delete the old column once you are sure, since deleting removes its data."
+    },
+    {
+      "id": "quiz-key-failed",
+      "type": "quiz",
+      "instruction": "An integration will match clients by Email. You create an Email alternate key, but its status shows Failed. What is the likely cause, and how do you fix it?",
+      "why": "Alternate keys depend on clean, unique data, and they cannot be edited, only deleted and created again.",
+      "estimated_minutes": 2,
+      "hint": "Think about what the key's background job checks in the rows that already exist.",
+      "answer": "Existing rows probably share an Email value, so the unique index could not be built. Fix the duplicate emails, then delete the key and create it again. A key cannot be edited after creation."
+    },
+    {
+      "id": "quiz-prompt-vs-summary",
+      "type": "quiz",
+      "instruction": "Your manager wants an AI-written intro sentence saved for every client, so a flow can email it out. Should you build a prompt column or a row summary, and why?",
+      "why": "Knowing where AI output lives, stored in a column or shown on screen, decides what apps and flows can use.",
+      "estimated_minutes": 2,
+      "hint": "Which of the two features keeps its result in the table itself?",
+      "answer": "A prompt column. It stores the AI result in the table, so apps, flows, and reports can use it. A row summary is generated for people viewing forms and views, not stored as column data a flow can read."
+    }
+  ]
+}
