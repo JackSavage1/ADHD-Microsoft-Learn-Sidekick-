@@ -86,6 +86,25 @@
         <p class="muted">Pick any lesson. Skip the ones you don't need: Next lesson will pass over them.</p>
         <ol id="lesson-items" class="lesson-items"></ol>
         <button id="lessons-close-btn" type="button" class="btn btn-secondary">Back to the lesson</button>
+
+        <!-- Backup: save progress to a file, or load it from one (for example on another computer). -->
+        <div class="data-tools">
+          <p class="eyebrow">Your progress</p>
+          <p class="muted">Saved only in this browser. Export a backup file, or import one to bring your progress to another computer.</p>
+          <div class="data-buttons">
+            <button id="export-btn" type="button" class="btn btn-secondary">Export</button>
+            <button id="import-btn" type="button" class="btn btn-secondary">Import</button>
+          </div>
+          <input id="import-file" type="file" accept=".json,application/json" hidden>
+          <div id="import-confirm" class="import-confirm" hidden>
+            <p id="import-summary"></p>
+            <div class="data-buttons">
+              <button id="import-apply-btn" type="button" class="btn btn-primary">Replace my progress</button>
+              <button id="import-cancel-btn" type="button" class="btn btn-secondary">Cancel</button>
+            </div>
+          </div>
+          <p id="data-message" class="muted" role="status"></p>
+        </div>
       </section>
 
       <!-- Shown if the lesson file can't be loaded. -->

@@ -27,7 +27,7 @@ Each lesson ends with 3 quiz questions. The steps were written from Microsoft's 
 - **Quiz steps** at the end: reveal the answer, then score yourself right or wrong.
 - **A whole course, your way.** The lesson list (the ≡ button at the top right, the "Lesson 2 of 7" chip on every step, or the **L** key) shows every lesson and how far along you are. Open any lesson, and press **Skip** on the ones you don't need.
 - **Next lesson** appears when you finish a lesson and takes you to the next one you haven't finished or skipped.
-- **Remembers everything** (your step, streak of study days, sessions completed) in `chrome.storage.local`, so closing the panel loses nothing.
+- **Remembers everything** (your step, streak of study days, sessions completed) in `chrome.storage.local`, so closing the panel loses nothing. **Export** and **Import** (at the bottom of the lesson list) back it up to a file or move it to another computer.
 - **Private by design.** Only two permissions (`sidePanel`, `storage`). No content scripts, no host permissions: it never reads or changes Microsoft's pages, and it makes no network requests.
 
 ## Install (2 minutes)
@@ -55,6 +55,10 @@ Good to know:
 - The first time you open Sidekick, it starts on the lesson list so you can choose where to begin.
 - Your streak counts days in a row with at least one logged session.
 - Power Apps sometimes renames buttons. If a label in a step doesn't match your screen, press Stuck: the hints cover the common alternatives.
+
+### Where your data lives
+
+Everything stays on your computer. The lessons are the JSON files in this folder's `lessons/` directory. Your progress is in Chrome's extension storage for your Chrome profile, and Chrome Sync doesn't copy it. Updating the files or reloading the extension keeps your progress. Removing the extension, moving this folder, or switching computers or Chrome profiles starts fresh, unless you **Export** first and **Import** afterward.
 
 ### Heads-up: developer environments are changing
 

@@ -410,6 +410,43 @@ input {
 }
 
 
+/* Export / import, at the bottom of the lesson list. */
+.data-tools {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.data-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.data-buttons .btn {
+  flex: 1 1 0;
+}
+
+/* "Replace your progress?" uses the caution colours: it overwrites data. */
+.import-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 12px;
+  border-left: 4px solid var(--warn-border);
+  border-radius: 10px;
+  background: var(--warn-bg);
+  color: var(--warn-text);
+}
+
+#data-message:empty {
+  display: none;
+}
+
+
 /* ---- The step card -------------------------------------------------------
    Everything inside is sized in `em`, so panel.js can shrink the whole card
    by lowering --text-scale (1 = normal size). --hero-ratio is how much bigger

@@ -15,8 +15,9 @@
       9. Step actions    Done, Stuck, Back, quiz scoring, restart, switching lessons
      10. Focus timer     start, pause, tick, end
      11. Session log     the "walk away" screen and the streak maths
-     12. Keyboard        optional shortcuts
-     13. Start-up
+     12. Backup          export and import progress as a file
+     13. Keyboard        optional shortcuts
+     14. Start-up
 
    The pattern everywhere: an action changes `state`, saves it, then calls
    render(), which redraws the screen from `state`. Nothing else touches the page.
@@ -90,6 +91,8 @@ const view = {
   hintShown: false,    // hint and answer reset every time the step changes
   answerShown: false,
   showBreak: false,    // the "Logged. Take a break." screen
+  pendingImport: null, // a backup file read in, waiting for "Replace my progress"
+  dataMessage: '',     // feedback under the Export / Import buttons
 };
 
 function newStats() {
@@ -147,6 +150,14 @@ const el = {
   courseTitle: $('course-title'),
   lessonItems: $('lesson-items'),
   lessonsCloseBtn: $('lessons-close-btn'),
+  exportBtn: $('export-btn'),
+  importBtn: $('import-btn'),
+  importFile: $('import-file'),
+  importConfirm: $('import-confirm'),
+  importSummary: $('import-summary'),
+  importApplyBtn: $('import-apply-btn'),
+  importCancelBtn: $('import-cancel-btn'),
+  dataMessage: $('data-message'),
 
   error: $('error'),
   errorDetail: $('error-detail'),
@@ -316,9 +327,10 @@ function isSkipped(lesson) {
   return state.skippedLessons.includes(lesson.id);
 }
 
-function isComplete(lesson) {
+// `p` defaults to your saved progress; a backup file can pass its own.
+function isComplete(lesson, p = state.progress[lesson.id]) {
   const total = lesson.steps.length;
-  return countDone(lesson) === total || state.progress[lesson.id].index >= total;
+  return countDone(lesson, p) === total || p.index >= total;
 }
 
 // The next lesson worth doing: the first one after this lesson in course order
@@ -391,8 +403,8 @@ function renderProgress() {
 }
 
 // Steps of a lesson that are marked done (ignoring ids a newer lesson version dropped).
-function countDone(lesson) {
-  const done = new Set(state.progress[lesson.id].done);
+function countDone(lesson, p = state.progress[lesson.id]) {
+  const done = new Set(p.done);
   return lesson.steps.filter((step) => done.has(step.id)).length;
 }
 
@@ -460,6 +472,9 @@ function renderLessonComplete() {
 // Skip / Add back button. Built with createElement (not innerHTML), like all lesson text.
 function renderLessonList() {
   setText(el.courseTitle, view.course.title);
+  el.importConfirm.hidden = !view.pendingImport;
+  if (view.pendingImport) setText(el.importSummary, backupSummary(view.pendingImport));
+  setText(el.dataMessage, view.dataMessage);
   el.lessonItems.replaceChildren(...view.lessons.map((lesson, i) => {
     const title = document.createElement('span');
     title.className = 'lesson-item-title';
@@ -701,6 +716,8 @@ function onNextLesson() {
 function onLessonsToggle() {
   if (view.lessons.length === 0 || lessonIsBlocked()) return;
   view.showLessons = !view.showLessons;
+  view.pendingImport = null;
+  view.dataMessage = '';
   render();
   // Put keyboard focus somewhere useful in the view that just opened.
   if (view.showLessons) el.lessonItems.querySelector('[aria-current="true"]')?.focus();
@@ -878,7 +895,119 @@ function tidyStats(raw) {
 }
 
 
-// ---- 12. Keyboard shortcuts -------------------------------------------------
+// ---- 12. Backup -------------------------------------------------------------
+// Your progress lives only in this browser (chrome.storage.local). A backup is
+// a small JSON file of it, so you can keep a copy or move to another computer.
+// The timer is left out on purpose: a backup is about progress, not a session.
+
+const BACKUP_FORMAT = 1;
+
+function onExport() {
+  const backup = {
+    app: 'sidekick',
+    format: BACKUP_FORMAT,
+    exportedAt: new Date().toISOString(),
+    data: {
+      currentLessonId: state.currentLessonId,
+      skippedLessons: state.skippedLessons,
+      progress: state.progress,
+      stats: state.stats,
+      sessionLog: state.sessionLog,
+    },
+  };
+  // Clicking a temporary link with the download attribute saves the file,
+  // without needing Chrome's "downloads" permission.
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `sidekick-progress-${dayKey(new Date())}.json`;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+  view.pendingImport = null;
+  view.dataMessage = `Exported ${link.download}. Check your downloads.`;
+  render();
+}
+
+function onImportClick() {
+  el.importFile.click();
+}
+
+// Read the chosen file and ask before replacing anything.
+async function onImportFile() {
+  const file = el.importFile.files[0];
+  if (!file) return;
+  try {
+    const text = await file.text();
+    el.importFile.value = ''; // so picking the same file again still counts as a change
+    view.pendingImport = readBackup(JSON.parse(text));
+    view.dataMessage = '';
+  } catch {
+    el.importFile.value = '';
+    view.pendingImport = null;
+    view.dataMessage = `${file.name} isn't a Sidekick progress file. Nothing was changed.`;
+  }
+  render();
+  if (view.pendingImport) el.importApplyBtn.focus();
+}
+
+// Check the file's shape and keep only data the panel understands.
+function readBackup(raw) {
+  if (!isObject(raw) || raw.app !== 'sidekick' || raw.format !== BACKUP_FORMAT || !isObject(raw.data)) {
+    throw new Error('Not a Sidekick backup.');
+  }
+  const d = raw.data;
+  return {
+    exportedAt: typeof raw.exportedAt === 'string' ? raw.exportedAt : null,
+    currentLessonId: typeof d.currentLessonId === 'string' ? d.currentLessonId : null,
+    skippedLessons: Array.isArray(d.skippedLessons) ? d.skippedLessons.filter((id) => typeof id === 'string') : [],
+    progress: isObject(d.progress) ? d.progress : {},
+    stats: tidyStats(d.stats),
+    sessionLog: Array.isArray(d.sessionLog) ? d.sessionLog.filter(isObject) : [],
+  };
+}
+
+// "This file is from 26/10/2026: 3 of 7 lessons complete, ..." so you know what you're loading.
+function backupSummary(backup) {
+  const date = backup.exportedAt ? new Date(backup.exportedAt).toLocaleDateString() : 'an unknown date';
+  const complete = view.lessons.filter((lesson) =>
+    isComplete(lesson, tidyProgress(backup.progress[lesson.id], lesson.steps.length))).length;
+  const sessions = backup.stats.sessionsCompleted;
+  const streak = visibleStreak(backup.stats, new Date());
+  return `This file is from ${date}: ${complete} of ${view.lessons.length} lessons complete, `
+    + `${sessions} ${sessions === 1 ? 'session' : 'sessions'}, ${streak} day streak. `
+    + 'Replace your progress in this browser with it?';
+}
+
+function onImportApply() {
+  const backup = view.pendingImport;
+  if (!backup) return;
+  state.progress = backup.progress;
+  state.stats = backup.stats;
+  state.sessionLog = backup.sessionLog;
+  state.skippedLessons = backup.skippedLessons;
+  state.currentLessonId = findLesson(backup.currentLessonId) ? backup.currentLessonId : view.lessons[0].id;
+  for (const lesson of view.lessons) {
+    state.progress[lesson.id] = tidyProgress(state.progress[lesson.id], lesson.steps.length);
+  }
+  save('currentLessonId', 'skippedLessons', 'progress', 'stats', 'sessionLog');
+
+  view.pendingImport = null;
+  view.hintShown = false;
+  view.answerShown = false;
+  view.dataMessage = 'Progress imported.';
+  render();
+}
+
+function onImportCancel() {
+  view.pendingImport = null;
+  view.dataMessage = 'Import cancelled. Nothing was changed.';
+  render();
+}
+
+
+// ---- 13. Keyboard shortcuts -------------------------------------------------
 // Enter = Done (or Reveal answer on a quiz), S = Stuck, B or Left arrow = Back,
 // L = open or close the lesson list, Escape = close it.
 // Ignored while typing, while the session overlay is up, and for held-down keys.
@@ -919,7 +1048,7 @@ function onKeyDown(event) {
 }
 
 
-// ---- 13. Start-up -----------------------------------------------------------
+// ---- 14. Start-up -----------------------------------------------------------
 
 async function restoreState() {
   try {
@@ -964,6 +1093,11 @@ function wireEvents() {
   el.logNote.addEventListener('input', onNoteInput);
   el.logForm.addEventListener('submit', onLogSubmit);
   el.breakContinueBtn.addEventListener('click', onBreakContinue);
+  el.exportBtn.addEventListener('click', onExport);
+  el.importBtn.addEventListener('click', onImportClick);
+  el.importFile.addEventListener('change', onImportFile);
+  el.importApplyBtn.addEventListener('click', onImportApply);
+  el.importCancelBtn.addEventListener('click', onImportCancel);
   document.addEventListener('keydown', onKeyDown);
   // Check the clock straight away when the panel comes back into view.
   document.addEventListener('visibilitychange', tick);
