@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "id": "dataverse-choices",
+  "title": "Work with choices in Dataverse",
+  "source": "https://learn.microsoft.com/en-us/training/modules/working-with-option-sets/",
+  "steps": [
+    {
+      "id": "check-environment",
+      "type": "task",
+      "instruction": "At make.powerapps.com, click the Environment picker at the top right and confirm Sidekick Dev is selected, the developer environment you have used since module 1.",
+      "why": "Choices you create become part of this environment's data model, so build them where mistakes cannot reach real users.",
+      "estimated_minutes": 1,
+      "hint": "No Sidekick Dev in the list? Use the developer environment you set up in module 1, even if it has another name.",
+      "answer": "Top right, click Environment and pick Sidekick Dev. The page reloads with Sidekick Dev shown at the top right, and Tables lists your Client, Project, and Interaction tables."
+    },
+    {
+      "id": "inspect-local-type",
+      "type": "task",
+      "instruction": "Left menu, click Tables, then open Interaction. Under Schema click Columns, then open Type. Look at Sync with global choice? and the Label and Value of each option. Close without saving.",
+      "why": "A local choice keeps its options inside one column on one table, so no other column can reuse that list.",
+      "estimated_minutes": 2,
+      "hint": "Click the column name to open its properties panel. If Sync with global choice? reads Yes, Sync this choice with names the global list it borrows from.",
+      "answer": "Sync with global choice? reads No, so Type is local: Call, Email, and Meeting exist only in this column. Each label has a long Value number, usually nine digits. Apps show the label; Dataverse stores the Value in each row."
+    },
+    {
+      "id": "explore-industry",
+      "type": "task",
+      "instruction": "In Tables, click the All tab, search for Account and open it. Under Schema click Columns, then open Industry. Scroll through its options and their Values. Close without saving.",
+      "why": "Dataverse ships with standard choices like this one, so check what already exists before building your own list.",
+      "estimated_minutes": 2,
+      "hint": "Use the search box above the column list and type industry. Account is a standard table, so look under the All tab, not Custom.",
+      "answer": "Data type Choice, with built-in options such as Accounting, Brokers, and Consulting, and small Values 1, 2, 3 and up. These are standard: you can add your own options, but you cannot delete the built-in ones."
+    },
+    {
+      "id": "create-client-tier",
+      "type": "task",
+      "instruction": "In the left menu, click More, then Choices. Click New choice. Display name: Client Tier. Add three options with the labels Bronze, Silver, and Gold. Click Save.",
+      "why": "A global choice is its own component, so many columns on many tables can share one list you maintain in one place.",
+      "estimated_minutes": 4,
+      "hint": "Choices not under More? Try Discover all. Or open Solutions, a solution, then New, Choice, possibly under More. Add each option with the New choice button in the panel.",
+      "answer": "The list was already long: over 100 standard global choices ship with Dataverse. After Save, Client Tier appears among them with a Name like cr123_clienttier. Bronze, Silver, and Gold each got a Value automatically; leave those numbers as they are.",
+      "warning": "Check the spelling before you save. The choice's Name, generated from the display name, cannot be changed afterward."
+    },
+    {
+      "id": "add-tier-column",
+      "type": "task",
+      "instruction": "Open your Client table. Under Schema click Columns, then New column. Display name: Tier. Data type: Choice. Set Sync with global choice? to Yes, pick Client Tier in Sync this choice with, then Save.",
+      "why": "A synced column borrows its options from the global choice, so it always shows the current Client Tier list.",
+      "estimated_minutes": 4,
+      "hint": "In the Data type list, pick Choice, not Choices. Leave Selecting multiple choices is allowed unchecked. See Done instead of Save? Click Done, then Save table.",
+      "answer": "The panel shows Bronze, Silver, and Gold pulled from Client Tier, with Edit choice to change them. Default choice can stay None. After Save, Tier appears in the Columns list with data type Choice.",
+      "warning": "Check Data type and the synced choice before you save. A column's data type cannot be changed after it is saved."
+    },
+    {
+      "id": "choice-or-choices",
+      "type": "task",
+      "instruction": "On paper, pick Choice or Choices for each Client need: its tier, the services it buys (Consulting, Training, Support), and its preferred contact method. Then check the answer.",
+      "why": "Choice allows one answer per row, while Choices allows several, but multi-select columns work in fewer places.",
+      "estimated_minutes": 2,
+      "hint": "Ask for each one: can a single client need more than one value at the same time?",
+      "answer": "Tier: Choice, one tier per client. Services: Choices, since a client can buy several. Contact method: Choice. Choices columns cannot be used in business rules, workflows, charts, or calculated and rollup columns, and cannot be sorted."
+    },
+    {
+      "id": "set-client-tiers",
+      "type": "task",
+      "instruction": "Open the Client table page and find its columns and data grid. Set Tier on every client row, making at least two of them Gold.",
+      "why": "Picking from a dropdown keeps every row consistent, with no typos like Gld that would break filters later.",
+      "estimated_minutes": 3,
+      "hint": "Tier hidden in the grid? Click the plus N more header above the columns. If cells will not edit, click Edit on the command bar.",
+      "answer": "Each Tier cell opens a dropdown with Bronze, Silver, and Gold. Pick one per row, then click away to save. Your Gold clients feed the Gold Clients view you build in the next module."
+    },
+    {
+      "id": "add-platinum",
+      "type": "task",
+      "instruction": "Go back to More, then Choices, and open Client Tier. Add a fourth option labeled Platinum and click Save. Then reopen a Client row's Tier dropdown.",
+      "why": "Adding an option is a safe change, and on a global choice it reaches every synced column at once.",
+      "estimated_minutes": 3,
+      "hint": "Search the Choices list for client to find it fast. Platinum missing from the dropdown? Refresh the browser tab and try again.",
+      "answer": "Client Tier now lists Bronze, Silver, Gold, and Platinum, with a new Value for Platinum. In the Client grid, Tier offers Platinum too, though you never edited the Tier column. A local choice like Type must be edited column by column."
+    },
+    {
+      "id": "look-remove-option",
+      "type": "task",
+      "instruction": "In Client Tier, look at Gold's Value and the three vertical dots beside it. Change nothing. Predict: your Gold clients use it, so what would removing Gold or changing its Value do?",
+      "why": "Rows store the option's Value, so removing or renumbering an option in use leaves those rows with invalid data.",
+      "estimated_minutes": 2,
+      "hint": "Remember what Dataverse stores in each row: the label you see, or the number next to it?",
+      "answer": "Your Gold rows would keep a Value that matches no option, so their data becomes invalid. Move rows to a valid option before removing one. To retire an option, the three dots open Additional properties, where Hidden hides it in model-driven apps. Close without saving.",
+      "warning": "Look only. Removing an option or changing its Value on a choice that rows already use can leave their data invalid."
+    },
+    {
+      "id": "quiz-global-or-local",
+      "type": "quiz",
+      "instruction": "Your team wants the Bronze, Silver, Gold, Platinum list already on Client to appear on a new Project column too. Should that column get its own local choice, or sync with Client Tier?",
+      "why": "Global choices let many columns share one list, so options and Values stay identical everywhere.",
+      "estimated_minutes": 2,
+      "hint": "Think back to what happened to the Tier column when you added Platinum.",
+      "answer": "Sync it with Client Tier. You maintain the options in one place, every synced column updates together, and the Values match. Two local copies drift apart, which causes errors, for example when mapping columns between related tables."
+    },
+    {
+      "id": "quiz-remove-option",
+      "type": "quiz",
+      "instruction": "Your manager says Silver is outdated and asks you to delete it from Client Tier today. Twelve clients are still Silver. What do you do before removing it?",
+      "why": "Existing rows depend on an option's Value, so cleaning up a choice starts with the data that uses it.",
+      "estimated_minutes": 2,
+      "hint": "Remember what you predicted when you looked at Gold's Value.",
+      "answer": "First move those twelve clients to a valid tier, such as Gold or Bronze. Removing an option that rows still use leaves their data invalid. Adding options is safe; removing or renumbering them is not."
+    },
+    {
+      "id": "quiz-choice-vs-choices",
+      "type": "quiz",
+      "instruction": "A new Client column must record every language a client speaks, often two or three. Should it be Choice or Choices, and what limitation should you warn the team about?",
+      "why": "Multi-select fits data with several answers, but it gives up support in rules, charts, and calculations.",
+      "estimated_minutes": 2,
+      "hint": "Look back at your Choice or Choices decision for the services a client buys.",
+      "answer": "Choices, because one row must hold several values. Warn that Choices columns cannot be used in business rules, workflows, charts, or calculated and rollup columns, and cannot be sorted in views."
+    }
+  ]
+}
