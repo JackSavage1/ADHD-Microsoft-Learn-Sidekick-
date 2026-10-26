@@ -147,7 +147,7 @@
       "why": "Edits stay in the workbook until you publish, so Publish is the moment Excel changes reach Dataverse.",
       "estimated_minutes": 3,
       "hint": "Edit a plain text cell, not a lookup; lookups must be set through the add-in. Add-in not running? Make the same edit in the Client grid instead.",
-      "answer": "Publish reports the rows it saved. In Power Apps, the Client columns and data pane shows the new City. Rows publish one at a time, so an error stops the changes to the rows after it."
+      "answer": "After Publish and a refresh in Power Apps, the Client columns and data pane shows the new City. Rows publish one at a time, so an error on one row stops the changes to the rows after it."
     },
     {
       "id": "add-test-row",

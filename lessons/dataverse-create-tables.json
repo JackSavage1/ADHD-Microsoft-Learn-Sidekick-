@@ -1,0 +1,237 @@
+{
+  "schema_version": 1,
+  "id": "dataverse-create-tables",
+  "title": "Create tables in Dataverse",
+  "source": "https://learn.microsoft.com/en-us/training/modules/get-started-with-powerapps-common-data-service/",
+  "steps": [
+    {
+      "id": "check-environment",
+      "type": "task",
+      "instruction": "At make.powerapps.com, click the Environment picker at the top right and select Sidekick Dev, your Developer environment. Confirm its name shows before you build anything.",
+      "why": "Everything in this lesson lands in the selected environment, so practice where mistakes cannot hurt real users or data.",
+      "estimated_minutes": 2,
+      "hint": "No Sidekick Dev? If you kept or renamed another developer environment in the previous lesson, pick that one instead.",
+      "answer": "Top right, click Environment, then Sidekick Dev. The page reloads with Sidekick Dev shown at the top right. Never use Default or a production environment for these exercises.",
+      "warning": "Never practice in production. Schema names and data types you set in this lesson can never be changed later."
+    },
+    {
+      "id": "standard-or-custom",
+      "type": "task",
+      "instruction": "In Tables, click the All tab and search for Account. Open it and scan its columns. Decide: could Account store your clients instead of a new custom Client table? Write your answer, then check.",
+      "why": "Standard tables come built in with columns, relationships, and app support, so Microsoft advises checking them before creating a custom table.",
+      "estimated_minutes": 3,
+      "hint": "No Tables in the left menu? Click More, then Tables. Look at what Account already tracks: a name, phone numbers, addresses.",
+      "answer": "Often yes: Account is the standard table for companies and customers, with columns like Account Name, phone, and address. In real projects, reuse it when it fits. This path builds a custom Client table for practice. Tables you create appear under the Custom tab."
+    },
+    {
+      "id": "dual-write-or-virtual",
+      "type": "task",
+      "instruction": "Your company runs Dynamics 365 Finance. On paper, choose dual-write or a virtual table for each: client records the sales team must audit and use offline, and a huge price list read live without copying.",
+      "why": "Dual-write copies data into Dataverse in both directions, while virtual tables leave data in the source, so the choice decides storage and features.",
+      "estimated_minutes": 4,
+      "hint": "For each need, ask: must the rows physically live in Dataverse, or is reading them where they already live enough?",
+      "answer": "Client records: dual-write. It syncs both ways in near real time, so rows live in Dataverse and support auditing and offline. Price list: virtual table. Data stays in the source and is read at runtime, using no Dataverse storage, but virtual tables cannot be audited or taken offline."
+    },
+    {
+      "id": "create-client-table",
+      "type": "task",
+      "instruction": "In Tables, click New table, then Set advanced properties. Display name: Client. On the Primary column tab, set Display name to Client Name. Leave Advanced options at their defaults and click Save.",
+      "why": "A custom table models your own business data, and its primary column, Client Name, is the text people see when they pick a client.",
+      "estimated_minutes": 5,
+      "hint": "The menu item may read Table (advanced properties). Skip Start with Copilot and Create with external data: you want the panel with Properties and Primary column tabs.",
+      "answer": "Panel: Display name Client, Plural name Clients, Primary column Client Name. Advanced options shows Type Standard and Record ownership User or team. Saving can take a minute, then the Client table page opens with Client Name as its primary column.",
+      "warning": "Check spelling before saving. The table and primary column schema names are permanent once the table is saved."
+    },
+    {
+      "id": "add-city-column",
+      "type": "task",
+      "instruction": "On the Client table page, under Schema click Columns, then New column. Display name: City. Data type: Text, also shown as Single line of text. Click Save.",
+      "why": "Each column stores one fact about every row, and its data type controls which values the column accepts.",
+      "estimated_minutes": 3,
+      "hint": "If a Format choice appears, keep plain text. If you see Done instead of Save, click Done, then Save table.",
+      "answer": "New column panel: Display name City, Data type Single line of text, plain text format. After Save, City appears in the Columns list beside system columns such as Created On and Owner that Dataverse added for you.",
+      "warning": "Check the data type before saving. Dataverse will not let you change it afterward."
+    },
+    {
+      "id": "add-phone-column",
+      "type": "task",
+      "instruction": "Click New column again. Display name: Phone. Data type: Phone. Click Save.",
+      "why": "The Phone format keeps the value as text but validates it as a phone number and shows it as a click-to-call link.",
+      "estimated_minutes": 3,
+      "hint": "Phone may sit inside Single line of text in the Data type list, or read Phone number. Some layouts use Text with a Format dropdown set to Phone.",
+      "answer": "Data type Phone, a single line of text column with Phone format. After Save, Columns lists Phone with that data type. Phone numbers stay text, so leading zeros and plus signs survive, unlike in a number column."
+    },
+    {
+      "id": "make-client-file",
+      "type": "task",
+      "instruction": "In Excel, or Notepad saved as .csv, make a file named Clients with a header row Client Name, City, Phone and five client rows below it. Save it where you can find it.",
+      "why": "Bulk import beats typing rows one by one, and headers that match column display names let the mapping happen automatically.",
+      "estimated_minutes": 5,
+      "hint": "Make the headers match your Client column display names exactly. In Notepad, separate values with commas and end the file name with .csv.",
+      "answer": "Example rows: Contoso, Seattle, 555-0100. Fabrikam, Chicago, 555-0101. Northwind Traders, Denver, 555-0102. Litware, Boston, 555-0103. Tailspin Toys, Austin, 555-0104. One row per client, each value under its matching header, saved as .xlsx or .csv."
+    },
+    {
+      "id": "import-clients",
+      "type": "task",
+      "instruction": "Open the Client table. On the command bar click Import, then Import data from Excel. Upload your Clients file, wait until Mapping status reads Mapping was successful, then click Import.",
+      "why": "Import maps each file column to a table column, then adds all the rows in one job instead of one at a time.",
+      "estimated_minutes": 5,
+      "hint": "Mapping errors? Click Map status and pick the matching Client column per header. Import unavailable here? Try Import, Import data, Text/CSV, or type the rows in the grid.",
+      "answer": "If asked, select Client, then Next. Import data page: Upload, then Mapping was successful, then Import. A message reports 5 inserts after a few minutes. Refresh the Client table page: the data grid lists your five clients. Newer layouts may show Import from Excel (Preview) instead."
+    },
+    {
+      "id": "create-project-table",
+      "type": "task",
+      "instruction": "In Tables, click New table, then Set advanced properties. Display name: Project. On the Primary column tab, set Display name to Project Name, then click Save.",
+      "why": "Projects get their own custom table so each one can carry its own dates, budget, and link to a client.",
+      "estimated_minutes": 5,
+      "hint": "Same panel as for Client. If the menu item reads Table (advanced properties), use that one.",
+      "answer": "Display name Project, Plural name Projects, primary column Project Name, Type Standard, Record ownership User or team. After Save, the Project table page opens. In Tables, the Custom tab now lists both Client and Project.",
+      "warning": "Check spelling before saving. The table and primary column schema names are permanent once the table is saved."
+    },
+    {
+      "id": "add-start-date-column",
+      "type": "task",
+      "instruction": "On the Project table page, under Schema click Columns, then New column. Display name: Start Date. Data type: Date only. Click Save.",
+      "why": "A Date only column shows just the date, which fits a start date where the time of day does not matter.",
+      "estimated_minutes": 3,
+      "hint": "Date only may sit inside Date and time in the Data type list.",
+      "answer": "New column panel: Display name Start Date, Data type Date only. After Save, Start Date appears in the Project Columns list."
+    },
+    {
+      "id": "add-budget-column",
+      "type": "task",
+      "instruction": "Click New column again. Display name: Budget. Data type: Currency. Click Save. Predict: will Dataverse add any columns of its own? Then search the Columns list for Currency and Exchange Rate.",
+      "why": "Currency columns store money together with its currency, so Dataverse can convert every amount to your organization's base currency.",
+      "estimated_minutes": 4,
+      "hint": "Currency may sit under Number in the Data type list. After saving, look for columns you did not create yourself.",
+      "answer": "Yes. With the first currency column on a table, Dataverse adds a Currency lookup and an Exchange Rate column, plus a Budget base column, ending in Base, that holds the amount in the base currency."
+    },
+    {
+      "id": "predict-relationship-type",
+      "type": "task",
+      "instruction": "Each client can have many projects, and each project has one client. Write down: which table gets the lookup column, and what the link is called from Project's side and from Client's side.",
+      "why": "Dataverse has only two real relationship types, one-to-many and many-to-many; many-to-one is the same link seen from the child.",
+      "estimated_minutes": 4,
+      "hint": "A lookup column points to exactly one other row. Which table's rows each point to exactly one row of the other?",
+      "answer": "Project gets the lookup, because it is the many side. From Project the link is many-to-one; from Client it is one-to-many, the same relationship. Many-to-many fits only when both sides have many, like students and classes."
+    },
+    {
+      "id": "start-client-lookup",
+      "type": "task",
+      "instruction": "Open the Project table. Under Schema, click Relationships, then New relationship, then Many-to-one. Set Related table to Client and check that Lookup column display name reads Client. Do not save yet.",
+      "why": "A many-to-one relationship adds a lookup column, so each project row points to exactly one client row.",
+      "estimated_minutes": 5,
+      "hint": "The button may read Add relationship. Another route: under Columns, add a New column with Data type Lookup and Related table Client. It creates the same relationship.",
+      "answer": "Many-to-one panel: Current table Project, Related table Client, Lookup column display name Client. The lookup is created on Project, the current table. Keep the panel open for the next step."
+    },
+    {
+      "id": "check-delete-behavior",
+      "type": "task",
+      "instruction": "Still in the panel, expand Advanced options and find the relationship behavior. Predict: if a client is deleted, what happens to its projects? Keep the default, then click Done and Save table.",
+      "why": "Relationship behavior decides what an action on the parent row, such as a delete, does to its related child rows.",
+      "estimated_minutes": 3,
+      "hint": "Look for a behavior dropdown with options such as Referential, Remove Link and Parental. The answer depends on which one is selected.",
+      "answer": "Referential, Remove Link keeps the projects and clears their Client lookup. Referential, Restrict Delete blocks deleting a client that has projects. Parental deletes the projects too. After saving, Relationships lists the new many-to-one, and Columns shows a Client lookup."
+    },
+    {
+      "id": "check-client-side",
+      "type": "task",
+      "instruction": "Open the Client table and click Relationships under Schema. Predict how your new relationship is listed here, then find it.",
+      "why": "Seeing one link from both tables shows that many-to-one is simply one-to-many viewed from the child table.",
+      "estimated_minutes": 2,
+      "hint": "Search the list for Project, or sort by the relationship type column.",
+      "answer": "It shows with Related table Project and type One-to-many. It is the same relationship you created on Project, so editing it here or there changes the same thing."
+    },
+    {
+      "id": "add-project-row",
+      "type": "task",
+      "instruction": "On the Project table page, in the columns and data grid, add one row: Project Name: Website redesign, Start Date: today, Budget: 5000, Client: pick one of your imported clients.",
+      "why": "Filling a lookup proves the relationship works, and it shows the primary column, Client Name, doing its job in a picker.",
+      "estimated_minutes": 5,
+      "hint": "Client or Budget hidden? Click the plus N more link above the grid to show columns. Grid will not let you type? Click Edit to open the table designer.",
+      "answer": "The Client cell offers a search list showing Client Name values, such as Contoso. After you click away, the row saves with the client linked. That client now has one related project."
+    },
+    {
+      "id": "find-business-rules",
+      "type": "task",
+      "instruction": "Open the Client table and, under Customizations, click Business rules. Look only. Predict: would a rule built here apply in canvas apps, model-driven apps, or both? Then check.",
+      "why": "Dataverse keeps business logic with the data, so every app that uses the table follows the same rules without rebuilding them.",
+      "estimated_minutes": 4,
+      "hint": "Customizations sits on the table page beside Schema and Data experiences. Do not create a rule yet: a later path covers business rules.",
+      "answer": "The list is empty, with Add business rule or New business rule on the command bar. Both: a rule with Entity scope applies in canvas and model-driven apps and also runs on the server. Close any designer that opens without saving."
+    },
+    {
+      "id": "check-security-role",
+      "type": "task",
+      "instruction": "In the Power Platform admin center, go to Manage, Environments, Sidekick Dev, Settings. Under Users + permissions click Security roles, open Basic User, and search for Client. Predict its access first. Look only.",
+      "why": "Security roles decide which rows each user can create, read, write, or delete, table by table, at levels from User to Organization.",
+      "estimated_minutes": 5,
+      "hint": "Admin center: admin.powerplatform.microsoft.com. Client not listed? Set the privilege filter to All or Unassigned; Client may also sit under Custom Tables.",
+      "answer": "Client has no access: Create, Read, Write, Delete, and the other privileges read None. New custom tables are not granted to Basic User automatically. To share Client, an admin edits or copies a role and sets levels such as User or Organization. Close without saving."
+    },
+    {
+      "id": "turn-on-env-auditing",
+      "type": "task",
+      "instruction": "In the Power Platform admin center, open Sidekick Dev, then Settings. Expand Audit and logs, click Audit settings, turn on Start Auditing, and click Save.",
+      "why": "Auditing works at three levels, environment, table, and column, and nothing is logged anywhere until the environment level is on.",
+      "estimated_minutes": 5,
+      "hint": "No Start Auditing on the page? Click Global Audit Settings and look there. Another route: Security, then Compliance, then the Auditing tile.",
+      "answer": "Settings, Audit and logs, Audit settings: Start Auditing is on, with a retention period such as Forever. Leave Log access and Read logs off. After Save, Dataverse records changes, but only for tables and columns that also have auditing on. Audit logs use log storage."
+    },
+    {
+      "id": "turn-on-client-auditing",
+      "type": "task",
+      "instruction": "Back in Power Apps, open the Client table and click Properties on the command bar. Expand Advanced options, check Audit changes to its data, then click Save.",
+      "why": "Table auditing lets Dataverse log every create, update, and delete on Client rows, with who made each change and when.",
+      "estimated_minutes": 3,
+      "hint": "No Properties button? Click Edit, then Edit table properties. The checkbox sits among the Advanced options checkboxes, so scroll down.",
+      "answer": "Edit table panel, Advanced options: Audit changes to its data is checked. After Save, changes to Client rows are logged, as long as environment auditing stays on. If a Publish button appears, click it too."
+    },
+    {
+      "id": "check-column-auditing",
+      "type": "task",
+      "instruction": "Predict: is the Phone column audited now? On the Client table, under Schema click Columns, open Phone, expand Advanced options, and look at Enable auditing.",
+      "why": "Column auditing depends on table auditing, which depends on environment auditing, so all three levels must be on to log a change.",
+      "estimated_minutes": 2,
+      "hint": "Advanced options is a collapsed section at the bottom of the column panel. Close the panel without changing anything.",
+      "answer": "Yes, Enable auditing is already checked. Turning on table auditing enables most column types, such as text, number, and choice, by default. Lookup columns are off by default, and you can tick them one by one."
+    },
+    {
+      "id": "make-audited-change",
+      "type": "task",
+      "instruction": "In the Client data grid, change one client's City and click away to save. Predict: where would someone see the old and new values? Write it down, then check the answer.",
+      "why": "Audit logs answer who changed what and when, including the previous value, which compliance checks and troubleshooting rely on.",
+      "estimated_minutes": 4,
+      "hint": "You do not need to build an app now. Think of one place that shows a single row's history, and one that shows the whole environment.",
+      "answer": "On the row itself in a model-driven app: open it, click the Related tab, then Audit History. Admins see every logged change in the Audit Summary view, in the Power Platform Environment Settings app. Logs can take a few minutes to appear."
+    },
+    {
+      "id": "quiz-many-to-many",
+      "type": "quiz",
+      "instruction": "Your manager says some projects are shared by two clients. Can the Client lookup on Project record that? If not, which relationship type do you need?",
+      "why": "Choosing the right relationship type shapes how users link rows and how the data can be reported.",
+      "estimated_minutes": 2,
+      "hint": "Think about how many rows a single lookup cell can point to.",
+      "answer": "No. A lookup holds exactly one client, so Project to Client is many-to-one. Use a many-to-many relationship, which Dataverse stores in a relationship table, also called an intersect table, so each project can link to many clients and each client to many projects."
+    },
+    {
+      "id": "quiz-auditing-off",
+      "type": "quiz",
+      "instruction": "A colleague checked Audit changes to its data on a table, yet no audit history appears after edits. What is the most likely cause, and where is it fixed?",
+      "why": "Auditing only works when every level above the one you set is also on, which is a common setup mistake.",
+      "estimated_minutes": 2,
+      "hint": "Recall the three auditing levels and which one you turned on first.",
+      "answer": "Environment auditing is off. Table auditing records nothing until Start Auditing is on in the Power Platform admin center: the environment, Settings, Audit and logs, Audit settings. Column auditing depends on both levels."
+    },
+    {
+      "id": "quiz-reimport",
+      "type": "quiz",
+      "instruction": "You import Clients.csv a second time by mistake. Will Dataverse update your 5 existing clients or add 5 more? What would let it match existing rows?",
+      "why": "Knowing how imports match rows prevents duplicate data, which is far easier to avoid than to clean up.",
+      "estimated_minutes": 2,
+      "hint": "Think about how Dataverse identifies a row. It is not by its name.",
+      "answer": "It adds 5 duplicates. Imports match existing rows only by the primary key, a GUID, or by an alternate key, and your file has neither. Exporting first to get the IDs, or adding an alternate key such as on Email later in this path, enables updates."
+    }
+  ]
+}
