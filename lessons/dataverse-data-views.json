@@ -1,0 +1,236 @@
+{
+  "schema_version": 1,
+  "id": "dataverse-data-views",
+  "title": "Load/export data and create data views in Dataverse",
+  "source": "https://learn.microsoft.com/en-us/training/modules/load-export-data-create-data-views/",
+  "steps": [
+    {
+      "id": "check-environment",
+      "type": "task",
+      "instruction": "At make.powerapps.com, click the Environment picker at the top right and choose Sidekick Dev. Confirm its name shows at the top right before you touch any data.",
+      "why": "Imports, exports, and deletes in this lesson change real rows, so keep them in your practice environment.",
+      "estimated_minutes": 2,
+      "hint": "Sidekick Dev missing? In module 1 you may have kept or renamed another developer environment; pick that one. Never use Default or a production environment.",
+      "answer": "Top right, Environment, then Sidekick Dev. The page reloads and the picker shows Sidekick Dev. Under Tables you should find Client, Project, and Interaction from earlier modules.",
+      "warning": "Never practice on production data. Rows you delete in this lesson cannot be brought back."
+    },
+    {
+      "id": "show-client-data",
+      "type": "task",
+      "instruction": "Left menu, Tables, open Client. In the Client columns and data pane, click the +N more link and show Tier. Set Tier to Gold on two rows and Silver on one.",
+      "why": "The table page doubles as a quick data grid, so you can view and fix rows without building an app.",
+      "estimated_minutes": 4,
+      "hint": "The link reads something like +6 more, at the right end of the column headers. Grid read-only? Click Edit on the command bar and edit the rows there.",
+      "answer": "Client page, Client columns and data pane. The +N more link opens a column picker; check Tier. Click a Tier cell and pick Gold or Silver; it saves when you click away. Your two Gold rows will feed the view you build next."
+    },
+    {
+      "id": "open-client-views",
+      "type": "task",
+      "instruction": "On the Client page, under Data experiences, click Views. Look at the list Dataverse created for you and note each view's type. Do not open any yet.",
+      "why": "Every table gets ready-made views, and telling public from system views shows which ones users can actually pick in apps.",
+      "estimated_minutes": 2,
+      "hint": "Data experiences is one of the cards on the table page, next to Schema and Customizations. The type shows beside each view name.",
+      "answer": "Active Clients and Inactive Clients are Public. The rest are system views: Quick Find Active Clients, Client Advanced Find View, Client Associated View, and Client Lookup View. Public views appear in app view pickers; system views power search, lookups, and related lists."
+    },
+    {
+      "id": "create-gold-view",
+      "type": "task",
+      "instruction": "In the Views list, click New view on the command bar. View name: Gold Clients. Description: Clients in the Gold tier. Click Create.",
+      "why": "A custom public view saves a filtered, sorted list once, so every app user can pick it instead of rebuilding it.",
+      "estimated_minutes": 2,
+      "hint": "Leave Get AI-generated column suggestions unselected. No New view button? Open Client through Solutions, then Views, then New view.",
+      "answer": "The New view dialog takes the View name and an optional Description. Create opens the view designer: a live grid preview in the middle, Table columns on the left, and the view properties panel on the right. It starts with a column or two, such as Client Name."
+    },
+    {
+      "id": "add-view-columns",
+      "type": "task",
+      "instruction": "In the view designer, click + View column, or use the Table columns pane on the left. Add City, Tier, Email, and Client Since to the view.",
+      "why": "Columns decide what users see at a glance, so include only the ones that answer their question.",
+      "estimated_minutes": 2,
+      "hint": "Search the column list by name. Clicking a column adds it at the right side of the grid; dragging places it where you drop it.",
+      "answer": "Each column appears in the preview grid with your real Client data. Microsoft advises adding only the columns you need, because extra columns slow down views and grids."
+    },
+    {
+      "id": "filter-gold-tier",
+      "type": "task",
+      "instruction": "In the view properties panel on the right, under Filter by, click Edit filters. Click Add, then Add row. Set Tier, Equals, Gold, then click OK.",
+      "why": "A view filter decides which rows appear, so the list always shows the right records without users filtering it themselves.",
+      "estimated_minutes": 3,
+      "hint": "Shortcut: click the Tier column header, choose Filter by, set Equals and Gold, then Apply. No Gold rows? Check the Tier values you set earlier.",
+      "answer": "Edit filters opens the expression builder. Add, Add row, then column Tier, operator Equals, value Gold, and OK. Filter by now shows the Tier condition, and the preview lists only your two Gold clients."
+    },
+    {
+      "id": "sort-view",
+      "type": "task",
+      "instruction": "Click the City column header and choose Sort A to Z. Then look at the view properties panel and check what Sort by now shows.",
+      "why": "A default sort means users see rows in the same predictable order every time they open the view.",
+      "estimated_minutes": 2,
+      "hint": "The label may read Sort A-Z. Number and date columns say Sort ascending instead. Hold Shift while choosing a sort to add a second sort level.",
+      "answer": "City shows an up arrow in its header and Sort by lists City. Your Gold rows reorder alphabetically by city. Then sort by, in the same panel, adds more sort levels."
+    },
+    {
+      "id": "tidy-publish-view",
+      "type": "task",
+      "instruction": "Every row here is Gold, so the Tier column adds nothing. Click its header and choose Remove; remove Created On the same way if shown. Then click Save and publish.",
+      "why": "Removing a column never removes its filter, so you can filter on a value without wasting space displaying it.",
+      "estimated_minutes": 3,
+      "hint": "Removing a column changes only this view, not the table. To reorder the others, use Move Left or Move Right in the header menu, or drag.",
+      "answer": "Tier and Created On leave the grid, but Filter by still holds the Tier condition and only Gold rows remain. After Save and publish, go back to Views: Gold Clients is listed as a Public view, ready for any app."
+    },
+    {
+      "id": "choose-import-option",
+      "type": "task",
+      "instruction": "On paper, match each need to an import option: a one-time spreadsheet of new rows, a weekly SharePoint list that needs cleanup first, typo fixes in 10 existing rows.",
+      "why": "Dataverse offers several ways to bring data in, and choosing the right one saves rework and keeps data clean.",
+      "estimated_minutes": 2,
+      "hint": "For each one ask: one time or repeating, does it need transforming first, and are the rows new or already in the table?",
+      "answer": "One-time spreadsheet: Import, then Import data from Excel. Weekly SharePoint list with cleanup: Import data with Power Query, a dataflow that transforms rows and can refresh on a schedule. Typo fixes: Edit data in Excel with the add-in, then Publish."
+    },
+    {
+      "id": "make-project-file",
+      "type": "task",
+      "instruction": "In Excel, start a blank workbook. Row 1 headers: Project Name, Start Date, Budget. Add three projects, such as Website refresh, Office move, and CRM rollout. Save it as Projects.xlsx.",
+      "why": "Headers that match the table's column display names let the import map each column automatically.",
+      "estimated_minutes": 3,
+      "hint": "Use dates in your usual format and plain numbers for Budget. Leave out the Client lookup for now. Excel for the web or a CSV file works too.",
+      "answer": "Projects.xlsx has one header row and three data rows, for example Website refresh, 11/2/2026, 5000. Close the file before you upload it so it is not locked."
+    },
+    {
+      "id": "upload-project-file",
+      "type": "task",
+      "instruction": "In Tables, open Project. On the command bar, click Import, then Import data from Excel. Click Upload, choose Projects.xlsx, and wait for the Mapping status to update.",
+      "why": "The import maps your file's columns to table columns before any row is written, so problems show up early.",
+      "estimated_minutes": 3,
+      "hint": "Started from the Tables list? Select Project, then Next. Command missing or blocked? Some Developer Plan setups lack it; type the three rows into the Project grid instead.",
+      "answer": "The Import data page lists your file with a Mapping status. After a moment it reads Mapping was successful, because the headers match Project Name, Start Date, and Budget. Only Import from Excel (Preview) offered? Use it; the steps are similar."
+    },
+    {
+      "id": "import-project-rows",
+      "type": "task",
+      "instruction": "When the status reads Mapping was successful, click Import at the top right. Wait for it to finish, then refresh the Project page and find your three rows.",
+      "why": "Checking the table after an import proves the rows really landed, not just that the wizard said so.",
+      "estimated_minutes": 3,
+      "hint": "Mapping errors? Click the mapping status, match the columns, then Save Changes. Rows not showing? Do a hard refresh with Ctrl plus F5.",
+      "answer": "The import finishes with a count of inserts and updates: 3 inserts. In the Project columns and data pane, your three projects show Start Date and Budget filled in, and Client empty."
+    },
+    {
+      "id": "choose-export-option",
+      "type": "task",
+      "instruction": "On paper, match each need to an export option: email a one-off snapshot, a sheet that refreshes later, a CSV copy of one table, a continuous feed for analytics.",
+      "why": "Each export option fits a different job, from a quick snapshot to an always-current copy for analytics.",
+      "estimated_minutes": 2,
+      "hint": "Model-driven apps offer Export to Excel with static and dynamic worksheets. The table page offers Export data. Analytics feeds go to a data lake.",
+      "answer": "Snapshot: Export to Excel as a static worksheet. Refreshable sheet: a dynamic worksheet. CSV copy: Export, then Export data on the table. Analytics feed: Azure Synapse Link, shown in Power Apps as Link to Data lake."
+    },
+    {
+      "id": "export-client-data",
+      "type": "task",
+      "instruction": "Open the Client table. On the command bar, click Export, then Export data. When it finishes, click Download exported data, unzip the file, and open the CSV inside.",
+      "why": "An export gives you a portable copy of the rows and doubles as a template with the exact columns for later imports.",
+      "estimated_minutes": 3,
+      "hint": "Export may hide under the three dots on the command bar. Missing or blocked? Developer Plan setups may lack it; the Excel steps next give you a copy too.",
+      "answer": "The download is a zip holding one CSV. It lists your clients with City, Tier, and the other columns, plus a column of long GUID values: the primary key Dataverse uses to identify each row."
+    },
+    {
+      "id": "open-in-excel",
+      "type": "task",
+      "instruction": "On the Client table page, click the arrow next to Edit on the command bar, then Edit data in Excel. Open the downloaded file in Excel and click Enable editing.",
+      "why": "The Power Apps Excel add-in links the workbook to Dataverse, so you can edit many rows with familiar Excel tools.",
+      "estimated_minutes": 4,
+      "hint": "Or from the Tables list: three dots next to Client, then Edit data in Excel. Add-in blocked or asking for admin consent? Opening the file completes this step.",
+      "answer": "A workbook named like Client (number).xlsx downloads. After Enable editing, the Power Apps pane opens on the right. Click Trust this Add-in and Sign in if asked, with your Power Apps account. Rows load into the sheet, with New, Refresh, and Publish in the pane."
+    },
+    {
+      "id": "edit-row-excel",
+      "type": "task",
+      "instruction": "In the Excel sheet, change the City of one client. Click Publish in the Power Apps pane, then refresh the Client page in Power Apps to see the change.",
+      "why": "Edits stay in the workbook until you publish, so Publish is the moment Excel changes reach Dataverse.",
+      "estimated_minutes": 3,
+      "hint": "Edit a plain text cell, not a lookup; lookups must be set through the add-in. Add-in not running? Make the same edit in the Client grid instead.",
+      "answer": "Publish reports the rows it saved. In Power Apps, the Client columns and data pane shows the new City. Rows publish one at a time, so an error stops the changes to the rows after it."
+    },
+    {
+      "id": "add-test-row",
+      "type": "task",
+      "instruction": "In the Power Apps pane, click New. Enter Client Name Excel Test Client and any City, then click Publish. Check that the row appears on the Client page.",
+      "why": "Publishing new rows from Excel is a fast way to add several records without opening an app form.",
+      "estimated_minutes": 2,
+      "hint": "You can also start typing in the empty row just below the sheet. Leave Client Number blank; Dataverse fills it in.",
+      "answer": "A new row appears at the bottom of the sheet. After Publish and a refresh, Power Apps lists Excel Test Client, with its Client Number generated automatically."
+    },
+    {
+      "id": "delete-test-row",
+      "type": "task",
+      "instruction": "Right-click the row number of Excel Test Client, the row you just made, and click Delete. Click Publish, then confirm the row is gone from the Client page.",
+      "why": "Deleting a row in the sheet and publishing removes it from Dataverse, which is powerful and easy to do by accident.",
+      "estimated_minutes": 2,
+      "hint": "Or right-click inside the row and choose Delete, then Table Rows. Add-in not working? Just look at the menu and do not delete anything.",
+      "answer": "The row leaves the sheet, and Publish deletes it in Dataverse. After a refresh, Excel Test Client is gone from the Client page and your other clients are unchanged.",
+      "warning": "Deletes are permanent. Delete only Excel Test Client, never real rows, and check the row before you click Publish."
+    },
+    {
+      "id": "pq-connect-odata",
+      "type": "task",
+      "instruction": "On the Client page, click Import, then Import data. Choose OData and enter https://services.odata.org/V4/Northwind/Northwind.svc/ with Anonymous authentication. Click Next, check Customers, then click Transform data.",
+      "why": "Power Query connects to many sources, from files to web services, and lets you shape the data before it lands in Dataverse.",
+      "estimated_minutes": 4,
+      "hint": "Not on the table page? Use the Tables list: Import, then Import data. Search the Choose data source page for OData. Keep Authentication kind Anonymous.",
+      "answer": "The navigator lists the Northwind sample tables. Checking Customers shows a preview with CompanyName, City, Country, and Phone. Transform data opens the Power Query editor with your Customers query."
+    },
+    {
+      "id": "pq-filter-rows",
+      "type": "task",
+      "instruction": "In the Power Query editor, open the filter arrow on the Country column header, keep only Spain, and click OK. Look at Applied steps on the right, then click Next.",
+      "why": "Transforming before loading means only clean, relevant rows ever reach your table.",
+      "estimated_minutes": 3,
+      "hint": "The arrow sits at the right end of the Country header. Clear Select all first, then check Spain.",
+      "answer": "About five Spanish customers remain. Applied steps now ends with Filtered rows, a recorded step that runs again every time the dataflow refreshes."
+    },
+    {
+      "id": "pq-map-columns",
+      "type": "task",
+      "instruction": "On Map tables, choose Load to existing table and pick Client as the Destination table. Map CompanyName to Client Name, City to City, and Phone to Phone. Click Next.",
+      "why": "Mapping tells Dataverse which source column fills which table column, so each value lands in the right place.",
+      "estimated_minutes": 4,
+      "hint": "Each destination column has a source dropdown beside it; search by name. Leave every other column unmapped.",
+      "answer": "Load settings: Load to existing table, Destination table Client. Column mapping: Client Name from CompanyName, City from City, Phone from Phone. Everything else stays unmapped, and Client Number fills itself.",
+      "warning": "Leave Delete rows that no longer exist in the query output unchecked, or Dataverse can delete your other Client rows."
+    },
+    {
+      "id": "pq-publish",
+      "type": "task",
+      "instruction": "On the refresh settings page, choose Refresh manually and click Publish. When the refresh finishes, open the Client page and find the new Spanish clients.",
+      "why": "Publishing saves the import as a dataflow you can rerun or schedule later, not just a one-time copy.",
+      "estimated_minutes": 3,
+      "hint": "Track progress under Dataflows in the left menu, or More, then Dataflows. A license error means your Developer Plan lacks dataflows; cancel, the path still counts.",
+      "answer": "The dataflow appears under Dataflows with its refresh status. Once it succeeds, Client lists about five new rows, such as Romero y tomillo in Madrid, with Phone filled in. Refresh automatically would rerun it on a schedule."
+    },
+    {
+      "id": "quiz-gold-view",
+      "type": "quiz",
+      "instruction": "Your sales lead wants every app user to see a Gold-only client list. A coworker suggests each user filter the grid themselves. What do you build instead?",
+      "why": "Saved views put the same list in front of every user without anyone rebuilding the filter.",
+      "estimated_minutes": 2,
+      "hint": "Think about the view you saved and published, and what its type in the Views list meant.",
+      "answer": "A public view like Gold Clients, filtered on Tier equals Gold, then Save and publish. Every app user can pick it from the view list, while a personal view stays visible only to its owner unless shared."
+    },
+    {
+      "id": "quiz-import-choice",
+      "type": "quiz",
+      "instruction": "Every Monday, new clients arrive in a SharePoint list with messy city names that need fixing before loading. Which import option fits, and why?",
+      "why": "Matching the import tool to the job is the core skill of this module.",
+      "estimated_minutes": 2,
+      "hint": "Which option let you transform rows and could refresh on a schedule?",
+      "answer": "Power Query, through Import data, which saves a dataflow. It can clean the data with steps like your Spain filter and refresh automatically each week. Import data from Excel suits one-time file loads."
+    },
+    {
+      "id": "quiz-avoid-duplicates",
+      "type": "quiz",
+      "instruction": "You export Client data, fix phone numbers in the CSV, and import it back. How does Dataverse update the existing rows instead of creating duplicates?",
+      "why": "Knowing how rows are matched prevents duplicate records, one of the most common import mistakes.",
+      "estimated_minutes": 2,
+      "hint": "Remember the long values in the exported CSV, and the key you added on Email in an earlier module.",
+      "answer": "It matches each row by its GUID primary key, kept in the exported file, or by an alternate key such as Email. Matched rows are updated and unmatched rows are inserted: upsert logic."
+    }
+  ]
+}

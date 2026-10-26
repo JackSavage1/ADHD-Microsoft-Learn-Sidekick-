@@ -1,0 +1,240 @@
+{
+  "schema_version": 1,
+  "id": "dataverse-environments",
+  "title": "Create and manage environments in Dataverse",
+  "source": "https://learn.microsoft.com/en-us/training/modules/create-manage-environments/",
+  "steps": [
+    {
+      "id": "check-environment",
+      "type": "task",
+      "instruction": "At make.powerapps.com, click the Environment picker at the top right. Select your developer environment, the one where you built the Interaction table, and write down its exact name.",
+      "why": "This whole path happens in one practice environment, so knowing its exact name lets you find it in the admin center next.",
+      "estimated_minutes": 2,
+      "hint": "The picker shows the word Environment above a name. Developer environments created at sign-up are often named like Your Name's environment.",
+      "answer": "Top right, click Environment and pick your developer environment. The page reloads with its name at the top right, and Tables lists your Interaction table. No developer environment at all? Keep going; a later step shows how to create one.",
+      "warning": "Never practice in production. This lesson visits pages that can reset or delete a whole environment."
+    },
+    {
+      "id": "open-admin-center",
+      "type": "task",
+      "instruction": "Open admin.powerplatform.microsoft.com in a new tab. In the left navigation pane, click Manage, then click Environments in the Manage pane. Find the environment you wrote down.",
+      "why": "The Power Platform admin center is where environments are created, renamed, secured, backed up, and deleted.",
+      "estimated_minutes": 2,
+      "hint": "Older layout? Environments sits directly in the left menu. From Power Apps you can also click the Settings gear, then Admin center.",
+      "answer": "Left pane, Manage, then Environments (older layout: Environments in the left menu). The list shows each environment with columns such as Type and Managed. Your developer environment is in the list."
+    },
+    {
+      "id": "read-environment-types",
+      "type": "task",
+      "instruction": "In the Environments list, read the Type column for every environment you can see. Write down each type, and look for the one whose type is Default.",
+      "why": "An environment's type sets its purpose and lifespan: production, sandbox, trial, developer, or the shared default.",
+      "estimated_minutes": 3,
+      "hint": "Click the Type column header to sort or filter. The default environment is usually your organization's name followed by (default).",
+      "answer": "You see at least Developer, often Default too. Default is created automatically for each tenant, shared by every user, and can never be deleted. Default missing? You only see environments you administer, which is normal."
+    },
+    {
+      "id": "match-environment-type",
+      "type": "task",
+      "instruction": "On paper, match each need to an environment type: the company's live invoicing app, testing an update before go-live, your personal practice space, a 30-day try-out.",
+      "why": "Choosing the right type up front matters, because each type has different features, owners, and expiry rules.",
+      "estimated_minutes": 3,
+      "hint": "For each need ask: is it permanent, a separate place for testing, just for me, or short-term?",
+      "answer": "Live invoicing app: Production. Testing an update: Sandbox, which supports copy and reset. Personal practice: Developer, meant only for its owner. 30-day try-out: Trial, which expires after 30 days and is limited to one per user."
+    },
+    {
+      "id": "check-developer-managed",
+      "type": "task",
+      "instruction": "Find your developer environment in the list. Check that its Type reads Developer, then read its Managed column. Write down Yes or No.",
+      "why": "Microsoft is retiring unmanaged developer environments, so this column tells you whether your practice space keeps working.",
+      "estimated_minutes": 3,
+      "hint": "No Managed column in view? Scroll the list sideways, or open the environment and look through its Details card.",
+      "answer": "Type: Developer. Managed Yes: nothing to do. Managed No: Microsoft plans to suspend unmanaged developer environments starting December 15, 2026. Before then, ask your admin to turn on Managed Environments, or export your work in a solution.",
+      "warning": "Managed reads No? Save your work before December 15, 2026, or your tables, apps, and data may become unavailable."
+    },
+    {
+      "id": "predict-inactivity",
+      "type": "task",
+      "instruction": "Predict: you stop using your developer environment for six weeks. What happens to it? Write your guess, then check the answer.",
+      "why": "Developer environments are free but limited, and unused ones are cleaned up automatically to free resources.",
+      "estimated_minutes": 2,
+      "hint": "Think about why Microsoft would not keep free, idle environments around forever.",
+      "answer": "After 30 days with no activity, an unmanaged developer environment is disabled, and 15 days later it is deleted. Managed ones wait 60 days. Warning emails come first, and opening an app or running a flow resets the clock."
+    },
+    {
+      "id": "look-new-environment",
+      "type": "task",
+      "instruction": "In Environments, click New on the command bar. Look at the panel's fields, open the Type list, and then click Cancel if you already have a developer environment.",
+      "why": "Every environment starts in this panel, and choices like region and adding Dataverse are made once, at creation.",
+      "estimated_minutes": 3,
+      "hint": "No developer environment yet? Instead of Cancel: Name Sidekick Dev, Type Developer, turn on Add a Dataverse data store, then Next and Save.",
+      "answer": "The panel lists Name, Region, Get new features early, Type, Purpose, and Add a Dataverse data store, which cannot be undone. Type options depend on your license. Cancel creates nothing. Blocked from creating? Ask your admin for a developer environment, or use a trial."
+    },
+    {
+      "id": "rename-sidekick-dev",
+      "type": "task",
+      "instruction": "Click your developer environment's name to open it. In the Details card, click Edit. Change Name to Sidekick Dev, leave URL unchanged, and click Save.",
+      "why": "The friendly name is only a label, so renaming is safe, and a clear name stops you building in the wrong place.",
+      "estimated_minutes": 3,
+      "hint": "Already named Sidekick Dev? Skip the change. A new name can take up to 5 minutes to appear in Power Apps.",
+      "answer": "Environment page, Details card, Edit, Name: Sidekick Dev, then Save. The Details card and the Environments list now show Sidekick Dev. After a refresh, the Power Apps Environment picker shows it too.",
+      "warning": "Change only Name. Editing the URL turns off flows, breaks saved links, and releases the old address after 24 hours."
+    },
+    {
+      "id": "confirm-dataverse",
+      "type": "task",
+      "instruction": "On the Sidekick Dev page, look in the Details card for the Environment URL. Is there a URL, or an Add Dataverse button instead? Write down which you see.",
+      "why": "An environment holds zero or one Dataverse database, and only one with a database can store tables like Interaction.",
+      "estimated_minutes": 2,
+      "hint": "Click See all in the Details card to show every detail. Your Interaction table listed under Tables in Power Apps also proves a database exists.",
+      "answer": "You see an Environment URL ending in dynamics.com, such as org1234abcd.crm.dynamics.com. That address is your Dataverse database. An Add Dataverse button instead would mean no database yet; you could add one there or from Tables in Power Apps."
+    },
+    {
+      "id": "decide-database-options",
+      "type": "task",
+      "instruction": "Suppose an environment had no database. Add Dataverse would ask for Language, Currency, Enable Dynamics 365 apps, and Deploy sample apps and data. Write your picks for Sidekick Dev, and which one is permanent.",
+      "why": "Database options are chosen once and some can never change, so deciding deliberately avoids rebuilding an environment later.",
+      "estimated_minutes": 3,
+      "hint": "Which option needs a Dynamics 365 license? Which one would give you practice data to explore?",
+      "answer": "Your language and currency, Enable Dynamics 365 apps No, since it needs a Dynamics 365 license, and sample apps and data optional. Enable Dynamics 365 apps is permanent: once you choose No, you can never install Dynamics 365 apps there later."
+    },
+    {
+      "id": "open-users-page",
+      "type": "task",
+      "instruction": "On the Sidekick Dev page, click Settings on the command bar. Expand Users + permissions and click Users. Find your own name in the list.",
+      "why": "Being added to an environment only lets someone in; their security roles decide what they can actually do there.",
+      "estimated_minutes": 3,
+      "hint": "Settings may hide under the three dots on the command bar. In a personal developer environment, you may be the only person listed.",
+      "answer": "Settings, Users + permissions, Users. The list shows you, plus perhaps some system or application accounts. Add user on the command bar would add a coworker by name or email; you do not need it here."
+    },
+    {
+      "id": "check-your-roles",
+      "type": "task",
+      "instruction": "Select your name in the Users list, then click Manage security roles on the command bar. Note which roles are checked. Close the panel without saving.",
+      "why": "Security roles decide what each user can do, and one user can hold several roles whose privileges add up.",
+      "estimated_minutes": 3,
+      "hint": "Manage security roles appears once a user row is selected, sometimes under the three dots. Your current roles are the checked boxes.",
+      "answer": "The panel lists every role with a checkbox. System Administrator is usually checked for you, because you created this environment, giving you full access to its data and settings. Close or Cancel without changing anything.",
+      "warning": "Do not uncheck System Administrator on yourself. You could lose admin rights to your own environment."
+    },
+    {
+      "id": "open-system-customizer",
+      "type": "task",
+      "instruction": "Back under Users + permissions, click Security roles. Open System Customizer. On the Tables tab, search for interaction and read its privileges. Close without saving.",
+      "why": "System Customizer is the role for people who build tables and apps but should not manage security.",
+      "estimated_minutes": 4,
+      "hint": "Interaction is in the Custom Tables group; use the search box at the top right. Older editor? Look on the Custom Entities tab instead.",
+      "answer": "The role editor lists tables with privileges such as Create, Read, Write, Delete, Append, Append to, Assign, and Share, each with an access level. System Customizer can customize the environment and view custom table data like Interaction, but cannot create or edit security roles."
+    },
+    {
+      "id": "decide-custom-role",
+      "type": "task",
+      "instruction": "Decide: coworkers will only use a Client Tracker app to read and edit Client rows. Which built-in role would you copy to start their custom role? Write it down, then check.",
+      "why": "Custom security roles grant exactly the access people need, and starting from a minimal role keeps that access small.",
+      "estimated_minutes": 2,
+      "hint": "In the Security roles list, look for a role whose name suggests it only opens apps.",
+      "answer": "Copy App Opener, which has the minimum privileges to run an app, or Basic User. Then add Read, Write, and Append on Client. Copy brings over privileges only, not members. Do not build this role now."
+    },
+    {
+      "id": "check-blocked-files",
+      "type": "task",
+      "instruction": "Return to Settings, expand Product, and click Privacy + Security. Under Blocked attachments, check whether exe and js are in the blocked list. Change nothing.",
+      "why": "Environment settings apply to every app in the environment, including which files your Interaction attachments accept.",
+      "estimated_minutes": 3,
+      "hint": "Get back to Settings with the breadcrumb at the top, or the Settings button on the environment page. Extensions are separated by semicolons.",
+      "answer": "Settings, Product, Privacy + Security. Block these file extensions includes exe and js, so nobody can attach those files to an Interaction note. The same page holds session timeout and error reporting settings. Leave without saving."
+    },
+    {
+      "id": "check-auto-save",
+      "type": "task",
+      "instruction": "Predict: does a model-driven app form save by itself after you edit a record? Then in Settings, expand Product, click Behavior, and find Auto save.",
+      "why": "Behavior settings shape how model-driven apps act for everyone in the environment, without editing any app.",
+      "estimated_minutes": 2,
+      "hint": "Auto save sits in the Basic behavior section near the top of the page.",
+      "answer": "Auto save is On by default: after a record's first save, changes save automatically about 30 seconds after an edit. The page also holds release channel and formatting settings. Leave everything as is."
+    },
+    {
+      "id": "check-audit-settings",
+      "type": "task",
+      "instruction": "In Settings, expand Audit and logs and click Audit settings. Is Start Auditing on? Write it down and change nothing for now.",
+      "why": "Auditing must be on for the environment before any table, such as Client, can record who changed what.",
+      "estimated_minutes": 2,
+      "hint": "See only a Global Audit Settings link? It opens the older settings window where Start Auditing lives. Close it without saving.",
+      "answer": "Audit settings show Start Auditing, Log access, Read logs, and how long logs are kept. A later module turns on auditing for the Client table, which needs this switch on. Audit logs use log storage, so audit only what you need."
+    },
+    {
+      "id": "view-history",
+      "type": "task",
+      "instruction": "Go back to the Sidekick Dev environment page and click History on the command bar. Find the entry for your rename.",
+      "why": "Environment history records each operation, who started it, and whether it succeeded, so admins can trace changes.",
+      "estimated_minutes": 2,
+      "hint": "History may hide under the three dots on the command bar. A rename appears as an Edit action.",
+      "answer": "History lists actions such as Create and Edit, with start time, end time, initiated by, and status. Your rename shows as Edit, started by you, with a succeeded status. The details of an edit are not shown."
+    },
+    {
+      "id": "look-backup-restore",
+      "type": "task",
+      "instruction": "On the command bar, click Backup & Restore, then Restore or manage. Look at the System and Manual tabs. Do not click Continue or Restore; close the page.",
+      "why": "Dataverse backs up environments automatically, and admins add manual backups before big changes.",
+      "estimated_minutes": 3,
+      "hint": "The label may read Backup and restore. System backups are listed by date and time.",
+      "answer": "System tab: automatic backups from the last 7 days. Manual tab: backups you create, with Create a manual backup, which is safe and overwrites nothing. Restoring writes a backup over a target environment and replaces everything there.",
+      "warning": "Look only. Restoring overwrites the target environment's apps and data, and that cannot be undone."
+    },
+    {
+      "id": "look-copy",
+      "type": "task",
+      "instruction": "Click Copy on the command bar. Read the two copy levels and open the target environment list. Then close the panel without clicking Copy.",
+      "why": "Copying builds a test environment that mirrors another one, but it always overwrites the target completely.",
+      "estimated_minutes": 3,
+      "hint": "Copy may sit under the three dots, or be missing for some types. The target list shows only environments that can be overwritten, never production.",
+      "answer": "Everything copies data, users, customizations, and schemas. Customizations and schemas only leaves out most business data. The target list shows only environments you may overwrite, such as sandboxes. Copy, then Confirm, would replace everything in the target.",
+      "warning": "Never click Copy or Confirm here. Everything in the target environment is deleted and cannot be recovered."
+    },
+    {
+      "id": "find-reset-delete",
+      "type": "task",
+      "instruction": "On the command bar, find Reset and Delete without clicking them. Predict what each would remove from Sidekick Dev, then check the answer.",
+      "why": "Reset and delete are the most destructive environment operations, so admins must know exactly what they wipe out.",
+      "estimated_minutes": 2,
+      "hint": "Delete may sit under the three dots on the command bar, or beside the environment's name in the Environments list.",
+      "answer": "Reset rebuilds the environment with factory settings: tables, data, apps, flows, connections, and backups are gone, but the environment remains. Delete removes the whole environment. Only sandbox and developer environments can be reset, and the default environment can never be deleted.",
+      "warning": "Do not click Reset or Delete. Both permanently erase your Interaction table and all your other work."
+    },
+    {
+      "id": "decide-convert",
+      "type": "task",
+      "instruction": "Decide: your team tested in a sandbox and now wants it to become the live production environment. Where would you change that, and which types can switch this way?",
+      "why": "Converting an environment's type changes its purpose and protections without rebuilding it from scratch.",
+      "estimated_minutes": 2,
+      "hint": "Think about the Edit button in the Details card that you used for the rename.",
+      "answer": "Environment page, Details, Edit, then change Type from Sandbox to Production and Save. Edit switches only between Production and Sandbox. A trial uses Convert to production on the command bar instead. Sidekick Dev needs no conversion."
+    },
+    {
+      "id": "quiz-test-environment",
+      "type": "quiz",
+      "instruction": "Your manager wants to test a new version of the company's live app with realistic data, without risking real users. Which environment type and operation do you suggest?",
+      "why": "Separating test from production, and knowing how to fill a test environment, is the core of environment strategy.",
+      "estimated_minutes": 2,
+      "hint": "Which type supports copy and reset, and which direction does a copy flow?",
+      "answer": "A sandbox, filled by copying production into it with Copy, Everything. Production can never be a copy target, so real users stay safe. When testing ends, the sandbox can be reset."
+    },
+    {
+      "id": "quiz-maker-role",
+      "type": "quiz",
+      "instruction": "A coworker has the Environment Maker role in a Dataverse environment but cannot create a new table. What is missing, and why?",
+      "why": "Environment roles and Dataverse security roles are separate, and table work needs the right Dataverse role.",
+      "estimated_minutes": 2,
+      "hint": "Remember which role you opened under Security roles, and what it was for.",
+      "answer": "The System Customizer role, or System Administrator. Environment Maker can create apps, connections, and flows, but has no privileges on Dataverse tables or data. Makers who create or change tables need System Customizer as well."
+    },
+    {
+      "id": "quiz-dynamics-apps",
+      "type": "quiz",
+      "instruction": "A colleague added Dataverse to an environment with Enable Dynamics 365 apps set to No. Next month they want Dynamics 365 Sales installed there. What do you tell them?",
+      "why": "Some database choices are permanent, so they must be right when Dataverse is added.",
+      "estimated_minutes": 2,
+      "hint": "Think back to the Add Dataverse options you weighed for Sidekick Dev.",
+      "answer": "It cannot be done in that environment. Enable Dynamics 365 apps can only be chosen when the database is created, and it needs a Dynamics 365 license. They need a new environment with that option set to Yes."
+    }
+  ]
+}
