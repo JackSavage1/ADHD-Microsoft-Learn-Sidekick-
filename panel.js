@@ -16,8 +16,9 @@
      10. Focus timer     start, pause, tick, end
      11. Session log     the "walk away" screen and the streak maths
      12. Backup          export and import progress as a file
-     13. Keyboard        optional shortcuts
-     14. Start-up
+     13. Cloud sync      optional: keep progress on your own server (see server/)
+     14. Keyboard        optional shortcuts
+     15. Start-up
 
    The pattern everywhere: an action changes `state`, saves it, then calls
    render(), which redraws the screen from `state`. Nothing else touches the page.
@@ -34,6 +35,12 @@ const MIN_NOTE_CHARS = 3;     // a session note needs at least this many non-spa
 const MIN_TEXT_SCALE = 0.5;   // auto-fit never shrinks step text below half its normal size
 const HERO_RATIO = { full: 1.625, smallest: 1.25 }; // instruction size relative to body text
 const HERO_KEEP_SCALE = 0.85; // above this scale the instruction keeps its full ratio
+
+// Cloud sync (see server/README.md). Your server's address with no trailing
+// slash, e.g. 'https://sidekick-sync.up.railway.app'. Empty turns cloud sync off.
+const SYNC_URL = '';
+const SYNC_DELAY_MS = 3000;    // after a change, wait this long, then upload
+const SYNC_RECHECK_MS = 15000; // coming back to the panel re-checks the cloud at most this often
 
 
 // ---- 2. Storage -------------------------------------------------------------
@@ -58,8 +65,24 @@ function createMemoryStorage() {
   };
 }
 
+// The parts of `state` that cloud sync keeps the same on every computer.
+// (Not the timer: a focus session belongs to the computer you're using.)
+const SYNCED_KEYS = ['currentLessonId', 'skippedLessons', 'progress', 'stats', 'sessionLog'];
+
 // Save one or more top-level keys of `state`, e.g. save('progress', 'timer').
+// With cloud sync on, saving progress also queues an upload.
 async function save(...keys) {
+  if (syncIsOn() && keys.some((key) => SYNCED_KEYS.includes(key))) {
+    state.sync.dirty = true; // something here isn't in the cloud yet
+    localChanges += 1;
+    keys.push('sync');
+    scheduleSync();
+  }
+  await writeState(keys);
+}
+
+// Write keys of `state` to storage exactly as they are.
+async function writeState(keys) {
   const items = {};
   for (const key of keys) items[key] = state[key];
   try {
@@ -80,6 +103,7 @@ const state = {
   stats: newStats(),   // { sessionsCompleted, streak, lastSessionDay: 'YYYY-MM-DD' | null }
   timer: newTimer(),   // { status, endsAt, remainingMs, stepsDoneThisSession }
   sessionLog: [],      // [{ endedAt, minutes, stepsDone, note }]
+  sync: newSync(),     // { code, version, syncedAt, dirty }: this browser's link to the cloud
 };
 
 // On-screen-only state. Forgotten when the panel closes, on purpose.
@@ -93,6 +117,10 @@ const view = {
   showBreak: false,    // the "Logged. Take a break." screen
   pendingImport: null, // a backup file read in, waiting for "Replace my progress"
   dataMessage: '',     // feedback under the Export / Import buttons
+  syncStatus: 'idle',  // 'idle' | 'syncing' | 'ok' | 'error'
+  syncMessage: '',     // what the Cloud sync section says right now
+  showCodeEntry: false, // the "I have a code" form is open
+  confirmCloudDelete: false,
 };
 
 function newStats() {
@@ -105,6 +133,11 @@ function newTimer() {
 
 function newLessonProgress() {
   return { index: 0, done: [], quiz: {} };
+}
+
+// version: the cloud version this browser last synced with (0 = never).
+function newSync() {
+  return { code: null, version: 0, syncedAt: null, dirty: false };
 }
 
 
@@ -158,6 +191,23 @@ const el = {
   importApplyBtn: $('import-apply-btn'),
   importCancelBtn: $('import-cancel-btn'),
   dataMessage: $('data-message'),
+  dataWhere: $('data-where'),
+  syncTools: $('sync-tools'),
+  syncStatus: $('sync-status'),
+  syncOff: $('sync-off'),
+  syncOn: $('sync-on'),
+  syncCreateBtn: $('sync-create-btn'),
+  syncJoinBtn: $('sync-join-btn'),
+  syncJoinForm: $('sync-join-form'),
+  syncCodeInput: $('sync-code-input'),
+  syncCode: $('sync-code'),
+  syncCopyBtn: $('sync-copy-btn'),
+  syncNowBtn: $('sync-now-btn'),
+  syncOffBtn: $('sync-off-btn'),
+  syncDeleteBtn: $('sync-delete-btn'),
+  syncDeleteConfirm: $('sync-delete-confirm'),
+  syncDeleteYesBtn: $('sync-delete-yes-btn'),
+  syncDeleteNoBtn: $('sync-delete-no-btn'),
 
   error: $('error'),
   errorDetail: $('error-detail'),
@@ -307,11 +357,13 @@ function tidyLesson(raw, entry) {
 
 function tidyProgress(raw, stepCount) {
   const p = isObject(raw) ? raw : {};
-  return {
+  const tidy = {
     index: Number.isInteger(p.index) ? clamp(p.index, 0, stepCount) : 0,
     done: Array.isArray(p.done) ? p.done.filter((id) => typeof id === 'string') : [],
     quiz: isObject(p.quiz) ? p.quiz : {},
   };
+  if (typeof p.resetAt === 'string') tidy.resetAt = p.resetAt; // when "Restart lesson" was last used
+  return tidy;
 }
 
 function findLesson(lessonId) {
@@ -475,6 +527,7 @@ function renderLessonList() {
   el.importConfirm.hidden = !view.pendingImport;
   if (view.pendingImport) setText(el.importSummary, backupSummary(view.pendingImport));
   setText(el.dataMessage, view.dataMessage);
+  renderSync();
   el.lessonItems.replaceChildren(...view.lessons.map((lesson, i) => {
     const title = document.createElement('span');
     title.className = 'lesson-item-title';
@@ -686,7 +739,8 @@ function onBack() {
 // Clears this lesson's steps and quiz answers. Stats, streak and timer are untouched.
 function onRestart() {
   if (!activeLesson() || lessonIsBlocked()) return;
-  state.progress[state.currentLessonId] = newLessonProgress();
+  // resetAt lets cloud sync tell a restart apart from "nothing done yet".
+  state.progress[state.currentLessonId] = { ...newLessonProgress(), resetAt: new Date().toISOString() };
   goToStep(0);
   save('progress');
 }
@@ -907,13 +961,7 @@ function onExport() {
     app: 'sidekick',
     format: BACKUP_FORMAT,
     exportedAt: new Date().toISOString(),
-    data: {
-      currentLessonId: state.currentLessonId,
-      skippedLessons: state.skippedLessons,
-      progress: state.progress,
-      stats: state.stats,
-      sessionLog: state.sessionLog,
-    },
+    data: progressSnapshot(), // never includes your sync code
   };
   // Clicking a temporary link with the download attribute saves the file,
   // without needing Chrome's "downloads" permission.
@@ -957,15 +1005,45 @@ function readBackup(raw) {
   if (!isObject(raw) || raw.app !== 'sidekick' || raw.format !== BACKUP_FORMAT || !isObject(raw.data)) {
     throw new Error('Not a Sidekick backup.');
   }
-  const d = raw.data;
+  const exportedAt = typeof raw.exportedAt === 'string' ? raw.exportedAt : null;
+  return { exportedAt, ...readSnapshot(raw.data) };
+}
+
+// Your progress as one plain object: what Export saves and what cloud sync uploads.
+function progressSnapshot() {
   return {
-    exportedAt: typeof raw.exportedAt === 'string' ? raw.exportedAt : null,
+    currentLessonId: state.currentLessonId,
+    skippedLessons: state.skippedLessons,
+    progress: state.progress,
+    stats: state.stats,
+    sessionLog: state.sessionLog,
+  };
+}
+
+// The reverse: check a snapshot (from a file or the cloud) and keep only what
+// the panel understands.
+function readSnapshot(raw) {
+  const d = isObject(raw) ? raw : {};
+  return {
     currentLessonId: typeof d.currentLessonId === 'string' ? d.currentLessonId : null,
     skippedLessons: Array.isArray(d.skippedLessons) ? d.skippedLessons.filter((id) => typeof id === 'string') : [],
     progress: isObject(d.progress) ? d.progress : {},
     stats: tidyStats(d.stats),
     sessionLog: Array.isArray(d.sessionLog) ? d.sessionLog.filter(isObject) : [],
   };
+}
+
+// Make a snapshot your progress, fitted to the lessons as they are now.
+function applySnapshot(snapshot) {
+  state.progress = snapshot.progress;
+  state.stats = snapshot.stats;
+  state.sessionLog = snapshot.sessionLog;
+  state.skippedLessons = snapshot.skippedLessons;
+  if (findLesson(snapshot.currentLessonId)) state.currentLessonId = snapshot.currentLessonId;
+  else if (!findLesson(state.currentLessonId)) state.currentLessonId = view.lessons[0].id;
+  for (const lesson of view.lessons) {
+    state.progress[lesson.id] = tidyProgress(state.progress[lesson.id], lesson.steps.length);
+  }
 }
 
 // "This file is from 26/10/2026: 3 of 7 lessons complete, ..." so you know what you're loading.
@@ -983,15 +1061,8 @@ function backupSummary(backup) {
 function onImportApply() {
   const backup = view.pendingImport;
   if (!backup) return;
-  state.progress = backup.progress;
-  state.stats = backup.stats;
-  state.sessionLog = backup.sessionLog;
-  state.skippedLessons = backup.skippedLessons;
-  state.currentLessonId = findLesson(backup.currentLessonId) ? backup.currentLessonId : view.lessons[0].id;
-  for (const lesson of view.lessons) {
-    state.progress[lesson.id] = tidyProgress(state.progress[lesson.id], lesson.steps.length);
-  }
-  save('currentLessonId', 'skippedLessons', 'progress', 'stats', 'sessionLog');
+  applySnapshot(backup);
+  save(...SYNCED_KEYS); // with cloud sync on, this also uploads the imported progress
 
   view.pendingImport = null;
   view.hintShown = false;
@@ -1007,7 +1078,313 @@ function onImportCancel() {
 }
 
 
-// ---- 13. Keyboard shortcuts -------------------------------------------------
+// ---- 13. Cloud sync ---------------------------------------------------------
+// Optional. With SYNC_URL set, your progress is also kept on your own server
+// (see server/), and any computer with your sync code picks up where you left off.
+//
+// How two computers stay correct:
+//   - The server keeps your progress with a version number that goes up on every save.
+//   - We remember the version we last synced with (state.sync.version).
+//   - Download: if the cloud's version is different, another computer saved since,
+//     so we merge its copy into ours. Merging keeps every step finished anywhere.
+//   - Upload: we send our copy with the version it's based on. If another computer
+//     saved in between, the server answers 409 with its copy: we merge and try again.
+// Sync never blocks the lesson: if the server can't be reached, your changes wait
+// here (state.sync.dirty) and go up next time.
+
+let syncTimer = null;
+let syncRunning = false;
+let syncAgain = false;     // a change came in during a sync: run once more after it
+let lastSyncAttempt = 0;
+let localChanges = 0;      // counts saves, so a sync can tell if something changed under it
+
+function syncIsOn() {
+  return Boolean(SYNC_URL && state.sync.code);
+}
+
+function scheduleSync() {
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(syncNow, SYNC_DELAY_MS);
+}
+
+async function syncNow() {
+  if (!syncIsOn() || view.lessons.length === 0) return;
+  if (syncRunning) {
+    syncAgain = true;
+    return;
+  }
+  syncRunning = true;
+  lastSyncAttempt = Date.now();
+  clearTimeout(syncTimer);
+  view.syncStatus = 'syncing';
+  render();
+  try {
+    await syncOnce();
+    view.syncStatus = 'ok';
+    view.syncMessage = '';
+  } catch (err) {
+    view.syncStatus = 'error';
+    view.syncMessage = err.message;
+  }
+  syncRunning = false;
+  render();
+  if (syncAgain) {
+    syncAgain = false;
+    syncNow();
+  }
+}
+
+// One round trip: download, merge if another computer saved, upload if needed.
+async function syncOnce() {
+  const changesAtStart = localChanges;
+  const cloud = await syncRequest('GET', '/api/progress');
+  const cloudMoved = cloud.version !== state.sync.version;
+  if (cloudMoved && cloud.data) mergeIn(cloud.data);
+  if (!cloudMoved && !state.sync.dirty) {
+    finishSync(cloud, changesAtStart); // already the same on both sides
+    return;
+  }
+
+  // Upload. A conflict means another computer saved a moment ago: merge, retry.
+  let baseVersion = cloud.version;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const result = await syncRequest('PUT', '/api/progress', { data: progressSnapshot(), baseVersion });
+    if (!result.conflict) {
+      finishSync(result, changesAtStart);
+      return;
+    }
+    mergeIn(result.data);
+    baseVersion = result.version;
+  }
+  throw new Error('Another computer is saving at the same moment. Try Sync now again shortly.');
+}
+
+function finishSync({ version, updatedAt }, changesAtStart) {
+  state.sync.version = version;
+  state.sync.syncedAt = updatedAt || new Date().toISOString();
+  // Only "all uploaded" if nothing changed here while this sync was running.
+  state.sync.dirty = localChanges !== changesAtStart;
+  writeState(['sync']);
+}
+
+// Merge the cloud's copy into ours and keep the result here.
+// (writeState, not save: this must not queue yet another upload by itself.)
+function mergeIn(cloudData) {
+  const stepBefore = currentStep()?.id;
+  applySnapshot(mergeSnapshots(progressSnapshot(), readSnapshot(cloudData)));
+  if (currentStep()?.id !== stepBefore) {
+    view.hintShown = false; // the merge moved you to another step
+    view.answerShown = false;
+  }
+  writeState(SYNCED_KEYS);
+}
+
+// Combine this browser's progress with a newer copy from another computer.
+// Finished steps, quiz answers and logged sessions from both are kept; for
+// "where am I" settings (current lesson, skipped lessons) the newer copy wins.
+function mergeSnapshots(local, cloud) {
+  const progress = {};
+  for (const id of new Set([...Object.keys(local.progress), ...Object.keys(cloud.progress)])) {
+    const a = tidyProgress(local.progress[id], Number.MAX_SAFE_INTEGER);
+    const b = tidyProgress(cloud.progress[id], Number.MAX_SAFE_INTEGER);
+    const resetA = a.resetAt || '';
+    const resetB = b.resetAt || '';
+    if (resetA !== resetB) {
+      // Restarted on one computer more recently: that copy wins for this lesson,
+      // otherwise the other computer's finished steps would undo the restart.
+      progress[id] = resetA > resetB ? a : b;
+      continue;
+    }
+    progress[id] = {
+      index: Math.max(a.index, b.index),
+      done: [...new Set([...a.done, ...b.done])],
+      quiz: { ...b.quiz, ...a.quiz },
+    };
+    if (resetA) progress[id].resetAt = resetA;
+  }
+
+  // The same session can be in both copies: keep it once.
+  const sessions = new Map();
+  for (const entry of [...local.sessionLog, ...cloud.sessionLog]) {
+    sessions.set(`${entry.endedAt}|${entry.note}`, entry);
+  }
+  const sessionLog = [...sessions.values()].sort((x, y) => String(x.endedAt).localeCompare(String(y.endedAt)));
+
+  return {
+    currentLessonId: cloud.currentLessonId || local.currentLessonId,
+    skippedLessons: cloud.skippedLessons,
+    progress,
+    stats: mergeStats(local.stats, cloud.stats, sessionLog.length),
+    sessionLog,
+  };
+}
+
+function mergeStats(a, b, loggedSessions) {
+  const dayA = a.lastSessionDay || '';
+  const dayB = b.lastSessionDay || '';
+  const newer = dayA >= dayB ? a : b; // 'YYYY-MM-DD' strings sort like dates
+  return {
+    sessionsCompleted: Math.max(a.sessionsCompleted, b.sessionsCompleted, loggedSessions),
+    streak: dayA === dayB ? Math.max(a.streak, b.streak) : newer.streak,
+    lastSessionDay: newer.lastSessionDay,
+  };
+}
+
+// Talk to the sync server. Returns the JSON answer, or { conflict: true, ... }
+// for a 409. Anything else that isn't OK becomes an error with a plain message.
+async function syncRequest(method, path, body, code = state.sync.code) {
+  const headers = {};
+  if (code) headers.Authorization = `Bearer ${code}`;
+  if (body) headers['Content-Type'] = 'application/json';
+  let response;
+  try {
+    response = await fetch(SYNC_URL + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
+  } catch {
+    throw new Error("Can't reach the sync server right now. Your progress is safe here and will sync later.");
+  }
+  const answer = response.status === 204 ? {} : await response.json().catch(() => ({}));
+  if (response.status === 409) return { conflict: true, ...answer };
+  if (response.status === 401) throw new Error("The cloud doesn't recognise that sync code. Check it, or turn sync off.");
+  if (response.status === 429) throw new Error('The sync server is busy. Try again in a minute.');
+  if (!response.ok) throw new Error(answer.error || `The sync server answered ${response.status}.`);
+  return answer;
+}
+
+// Link this browser to an account. Version 0 means the first sync merges with
+// whatever the cloud already has, then uploads.
+function connectSync(code) {
+  state.sync = { ...newSync(), code, dirty: true };
+  writeState(['sync']);
+}
+
+async function onSyncCreate() {
+  view.syncStatus = 'syncing';
+  view.syncMessage = '';
+  render();
+  try {
+    const { code } = await syncRequest('POST', '/api/accounts', {}, null);
+    connectSync(code);
+  } catch (err) {
+    view.syncStatus = 'error';
+    view.syncMessage = err.message;
+    render();
+    return;
+  }
+  await syncNow();
+  el.syncCode.focus();
+}
+
+function onSyncJoinToggle() {
+  view.showCodeEntry = !view.showCodeEntry;
+  render();
+  if (view.showCodeEntry) el.syncCodeInput.focus();
+}
+
+async function onSyncJoin(event) {
+  event.preventDefault();
+  const code = el.syncCodeInput.value.trim();
+  if (!code) return;
+  view.syncStatus = 'syncing';
+  view.syncMessage = '';
+  render();
+  try {
+    await syncRequest('GET', '/api/progress', null, code); // check the code before keeping it
+  } catch (err) {
+    view.syncStatus = 'error';
+    view.syncMessage = err.message;
+    render();
+    return;
+  }
+  connectSync(code);
+  el.syncCodeInput.value = '';
+  view.showCodeEntry = false;
+  await syncNow();
+}
+
+async function onSyncCopy() {
+  try {
+    await navigator.clipboard.writeText(state.sync.code);
+    view.syncMessage = 'Sync code copied.';
+  } catch {
+    el.syncCode.select(); // copying was blocked: select it so Ctrl+C works
+    view.syncMessage = 'Press Ctrl+C (or Cmd+C) to copy the selected code.';
+  }
+  render();
+}
+
+function onSyncOff() {
+  state.sync = newSync();
+  writeState(['sync']);
+  view.syncStatus = 'idle';
+  view.syncMessage = 'Cloud sync is off on this computer. Your progress stays here.';
+  view.confirmCloudDelete = false;
+  render();
+}
+
+function onSyncDeleteToggle() {
+  view.confirmCloudDelete = !view.confirmCloudDelete;
+  render();
+}
+
+async function onSyncDelete() {
+  try {
+    await syncRequest('DELETE', '/api/account');
+  } catch (err) {
+    view.syncStatus = 'error';
+    view.syncMessage = err.message;
+    render();
+    return;
+  }
+  onSyncOff();
+  view.syncMessage = 'Your cloud data is deleted. Your progress stays in this browser.';
+  render();
+}
+
+function onVisibilityChange() {
+  tick(); // check the clock straight away when the panel comes back into view
+  if (document.visibilityState === 'visible' && Date.now() - lastSyncAttempt > SYNC_RECHECK_MS) syncNow();
+}
+
+function renderSync() {
+  el.syncTools.hidden = !SYNC_URL;
+  setText(el.dataWhere, syncIsOn()
+    ? 'Saved in this browser and in the cloud. You can also export a backup file, or import one.'
+    : 'Saved only in this browser. Export a backup file, or import one to bring your progress to another computer.');
+  if (!SYNC_URL) return;
+
+  const on = Boolean(state.sync.code);
+  const busy = view.syncStatus === 'syncing';
+  el.syncOff.hidden = on;
+  el.syncOn.hidden = !on;
+  el.syncJoinForm.hidden = on || !view.showCodeEntry;
+  el.syncDeleteConfirm.hidden = !on || !view.confirmCloudDelete;
+  if (el.syncCode.value !== (state.sync.code || '')) el.syncCode.value = state.sync.code || '';
+  for (const button of [el.syncCreateBtn, el.syncNowBtn, el.syncDeleteYesBtn]) button.disabled = busy;
+  setText(el.syncStatus, syncStatusText());
+}
+
+function syncStatusText() {
+  if (view.syncStatus === 'syncing') return 'Syncing…';
+  if (view.syncMessage) return view.syncMessage;
+  if (!state.sync.code) return '';
+  if (state.sync.dirty) return 'Changes waiting to sync.';
+  if (!state.sync.syncedAt) return 'Not synced yet.';
+  const when = new Date(state.sync.syncedAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+  return `Synced. Last cloud save: ${when}.`;
+}
+
+function tidySync(raw) {
+  const s = isObject(raw) ? raw : {};
+  return {
+    code: typeof s.code === 'string' && s.code ? s.code : null,
+    version: Number.isInteger(s.version) && s.version >= 0 ? s.version : 0,
+    syncedAt: typeof s.syncedAt === 'string' ? s.syncedAt : null,
+    dirty: s.dirty === true,
+  };
+}
+
+
+// ---- 14. Keyboard shortcuts -------------------------------------------------
 // Enter = Done (or Reveal answer on a quiz), S = Stuck, B or Left arrow = Back,
 // L = open or close the lesson list, Escape = close it.
 // Ignored while typing, while the session overlay is up, and for held-down keys.
@@ -1048,11 +1425,11 @@ function onKeyDown(event) {
 }
 
 
-// ---- 14. Start-up -----------------------------------------------------------
+// ---- 15. Start-up -----------------------------------------------------------
 
 async function restoreState() {
   try {
-    const saved = await storage.get(['currentLessonId', 'skippedLessons', 'progress', 'stats', 'timer', 'sessionLog']);
+    const saved = await storage.get(['currentLessonId', 'skippedLessons', 'progress', 'stats', 'timer', 'sessionLog', 'sync']);
     state.currentLessonId = typeof saved.currentLessonId === 'string' ? saved.currentLessonId : null;
     state.skippedLessons = Array.isArray(saved.skippedLessons)
       ? saved.skippedLessons.filter((id) => typeof id === 'string')
@@ -1061,6 +1438,7 @@ async function restoreState() {
     state.stats = tidyStats(saved.stats);
     state.timer = tidyTimer(saved.timer);
     state.sessionLog = Array.isArray(saved.sessionLog) ? saved.sessionLog : [];
+    state.sync = tidySync(saved.sync);
   } catch (err) {
     console.error('Sidekick could not read saved data:', err);
   }
@@ -1098,9 +1476,17 @@ function wireEvents() {
   el.importFile.addEventListener('change', onImportFile);
   el.importApplyBtn.addEventListener('click', onImportApply);
   el.importCancelBtn.addEventListener('click', onImportCancel);
+  el.syncCreateBtn.addEventListener('click', onSyncCreate);
+  el.syncJoinBtn.addEventListener('click', onSyncJoinToggle);
+  el.syncJoinForm.addEventListener('submit', onSyncJoin);
+  el.syncCopyBtn.addEventListener('click', onSyncCopy);
+  el.syncNowBtn.addEventListener('click', syncNow);
+  el.syncOffBtn.addEventListener('click', onSyncOff);
+  el.syncDeleteBtn.addEventListener('click', onSyncDeleteToggle);
+  el.syncDeleteYesBtn.addEventListener('click', onSyncDelete);
+  el.syncDeleteNoBtn.addEventListener('click', onSyncDeleteToggle);
   document.addEventListener('keydown', onKeyDown);
-  // Check the clock straight away when the panel comes back into view.
-  document.addEventListener('visibilitychange', tick);
+  document.addEventListener('visibilitychange', onVisibilityChange);
   new ResizeObserver(queueFit).observe(el.stage);
 }
 
@@ -1111,6 +1497,7 @@ async function start() {
   setInterval(tick, 250);
   await loadCourse();
   render();
+  syncNow(); // pick up anything saved on another computer (does nothing if sync is off)
 }
 
 start();

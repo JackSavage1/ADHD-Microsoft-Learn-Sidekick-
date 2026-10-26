@@ -442,8 +442,55 @@ input {
   color: var(--warn-text);
 }
 
-#data-message:empty {
+#data-message:empty,
+#sync-status:empty {
   display: none;
+}
+
+/* Cloud sync, below Export / Import. */
+.sync-tools {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.sync-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sync-group label {
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.text-input {
+  min-height: 48px;
+  padding: 0 12px;
+  border: 2px solid var(--border-strong);
+  border-radius: 10px;
+  background: var(--surface);
+  font-size: 1rem;
+}
+
+.code-row {
+  display: flex;
+  gap: 8px;
+}
+
+.code-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 0.9375rem;
+}
+
+.sync-group > .btn {
+  flex: none;
 }
 
 
