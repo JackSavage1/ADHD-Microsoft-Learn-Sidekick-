@@ -63,11 +63,11 @@
     {
       "id": "check-existing-first",
       "type": "task",
-      "instruction": "Before building, search Tables for interaction, then glance at the Phone Call and Appointment tables. Decide: does a standard table already do what you need?",
+      "instruction": "In Tables, click the All tab and search for interaction. Expect no results: you will build it next. Then search for Phone Call and Appointment and open each. Could either track calls, emails, and meetings together?",
       "why": "Microsoft advises checking standard tables first so you do not duplicate functionality that already exists.",
       "estimated_minutes": 3,
-      "hint": "Compare what each table tracks. One kind of activity, or a mix of calls, emails, and meetings?",
-      "answer": "No Interaction table exists. Phone Call and Appointment each cover one kind of activity. For practice you will build one custom table for calls, emails, and meetings. In real projects, reuse standard tables whenever they fit."
+      "hint": "Phone Call or Appointment missing? Make sure the All tab is selected, not Recommended or Custom, and search for phone instead of the full name.",
+      "answer": "No Interaction table exists yet: you create it in the next step, for practice. Phone Call covers only calls and Appointment only meetings. In real projects, reuse a standard table whenever one fits."
     },
     {
       "id": "start-new-table",
