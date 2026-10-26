@@ -36,11 +36,11 @@
       "id": "create-client-table",
       "type": "task",
       "instruction": "In Tables, click New table, then Set advanced properties. Display name: Client. On the Primary column tab, set Display name to Client Name. Leave Advanced options at their defaults and click Save.",
-      "why": "A custom table models your own business data, and its primary column, Client Name, is the text people see when they pick a client.",
+      "why": "A custom table holds your own business data, and its primary column is the name people see when they pick a client.",
       "estimated_minutes": 5,
-      "hint": "The menu item may read Table (advanced properties). Skip Start with Copilot and Create with external data: you want the panel with Properties and Primary column tabs.",
-      "answer": "Panel: Display name Client, Plural name Clients, Primary column Client Name. Advanced options shows Type Standard and Record ownership User or team. Saving can take a minute, then the Client table page opens with Client Name as its primary column.",
-      "warning": "Check spelling before saving. The table and primary column schema names are permanent once the table is saved."
+      "hint": "The menu item may read Table (advanced properties). You want the panel with Properties and Primary column tabs, not Copilot or external data.",
+      "answer": "Display name Client, Plural name Clients, Primary column Client Name, Type Standard. Saving can take a minute, then the Client table page opens with Client Name as its primary column.",
+      "warning": "Check spelling first. Table and primary column schema names are permanent after saving."
     },
     {
       "id": "add-city-column",

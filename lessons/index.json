@@ -4,6 +4,12 @@
   "title": "Get started using Dataverse",
   "source": "https://learn.microsoft.com/en-us/training/paths/get-started-cds/",
   "lessons": [
-    { "id": "dataverse-tables", "title": "Manage tables in Dataverse", "file": "dataverse-tables.json" }
+    { "id": "dataverse-environments", "title": "Create and manage environments in Dataverse", "file": "dataverse-environments.json" },
+    { "id": "dataverse-create-tables", "title": "Create tables in Dataverse", "file": "dataverse-create-tables.json" },
+    { "id": "dataverse-tables", "title": "Manage tables in Dataverse", "file": "dataverse-tables.json" },
+    { "id": "dataverse-columns", "title": "Create and manage columns within a table in Dataverse", "file": "dataverse-columns.json" },
+    { "id": "dataverse-choices", "title": "Work with choices in Dataverse", "file": "dataverse-choices.json" },
+    { "id": "dataverse-data-views", "title": "Load/export data and create data views in Dataverse", "file": "dataverse-data-views.json" },
+    { "id": "canvas-other-data", "title": "Connect to other data in a Power Apps canvas app", "file": "canvas-other-data.json" }
   ]
 }

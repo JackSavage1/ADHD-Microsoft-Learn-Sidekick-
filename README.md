@@ -1,6 +1,22 @@
 # Sidekick
 
-An ADHD-friendly learning companion for Microsoft Power Platform. Sidekick lives in Chrome's side panel next to make.powerapps.com and turns a Microsoft Learn module into one small, hands-on step at a time, with a 25-minute focus timer that tells you when to walk away.
+An ADHD-friendly learning companion for Microsoft Power Platform. Sidekick lives in Chrome's side panel next to make.powerapps.com and turns Microsoft Learn modules into one small, hands-on step at a time, with a 25-minute focus timer that tells you when to walk away.
+
+## The course
+
+All 7 modules of Microsoft Learn's [Get started using Dataverse](https://learn.microsoft.com/en-us/training/paths/get-started-cds/) learning path, about 7 hours of hands-on steps. Together they build one small client-tracking solution in your own environment:
+
+| # | Lesson | What you build | Steps |
+| --- | --- | --- | --- |
+| 1 | Create and manage environments in Dataverse | Your Sidekick Dev environment, and a tour of users, roles, settings and operations | 25 |
+| 2 | Create tables in Dataverse | Client and Project tables, a Client import, the Project-to-Client lookup, auditing | 25 |
+| 3 | Manage tables in Dataverse | The Interaction table: table types, primary column, attachments, licensing | 24 |
+| 4 | Create and manage columns within a table in Dataverse | Email, Client Since, a CL- autonumber and an Email alternate key on Client | 25 |
+| 5 | Work with choices in Dataverse | The Client Tier global choice and a synced Tier column | 12 |
+| 6 | Load/export data and create data views in Dataverse | A Gold Clients view, Excel import, export and editing, a Power Query import | 25 |
+| 7 | Connect to other data in a Power Apps canvas app | The Client Tracker canvas app with Office 365 Users and a Power Automate flow | 15 |
+
+Each lesson ends with 3 quiz questions. The steps were written from Microsoft's official Power Apps and Power Platform documentation, following each module's units.
 
 ## What it does
 
@@ -38,6 +54,12 @@ Good to know:
 - Your streak counts days in a row with at least one logged session.
 - Power Apps sometimes renames buttons. If a label in a step doesn't match your screen, press Stuck: the hints cover the common alternatives.
 
+### Heads-up: developer environments are changing
+
+The lessons assume a practice (developer) environment. Microsoft is retiring **unmanaged** developer environments, including the ones the free Power Apps Developer Plan creates: no new ones from **November 15, 2026**, existing ones suspended from **December 15, 2026**, and deleted from **January 15, 2027**. Lesson 1 shows you how to check yours (Power Platform admin center, Manage, Environments, the **Managed** column). If yours is affected, ask your admin about Managed Environments, or use a free trial environment. Details: [Microsoft's notice](https://learn.microsoft.com/en-us/power-platform/important-changes-coming).
+
+The Developer Plan also doesn't include dataflows, so a few import steps in lessons 2 and 6 may not work there. Those steps include a fallback.
+
 ## Project files
 
 | File | What it is |
@@ -63,4 +85,4 @@ Everything is plain HTML, CSS and JavaScript: no frameworks, no libraries, no bu
 
 ## About the project (for LinkedIn)
 
-I built Sidekick, a Chrome extension that makes studying Microsoft Power Platform work with an ADHD brain instead of against it. It sits in Chrome's side panel next to Power Apps and turns a Microsoft Learn module (Manage tables in Dataverse) into one small, hands-on step at a time, done in my real environment: create the table, rename the primary column, add the columns, check the licensing. A Stuck button gives a hint and then the answer, so I never stall for long, and a 25-minute focus timer ends each session with a "walk away" screen that has me log what I got done, which builds a daily streak. It's written in plain JavaScript, HTML and CSS on Manifest V3 with only two permissions and no access to the pages I'm working in, and the lesson format is documented so any Learn module can be added next.
+I built Sidekick, a Chrome extension that makes studying Microsoft Power Platform work with an ADHD brain instead of against it. It sits in Chrome's side panel next to Power Apps and turns Microsoft Learn's 7-module "Get started using Dataverse" path into about 150 small, hands-on steps, done in my real environment: set up the environment, build Client and Project tables, add columns, keys and choices, load data and build views, then a canvas app on top of it all. A Stuck button gives a hint and then the answer, so I never stall for long, and a 25-minute focus timer ends each session with a "walk away" screen that has me log what I got done, which builds a daily streak. It's written in plain JavaScript, HTML and CSS on Manifest V3 with only two permissions and no access to the pages I'm working in, and the lesson format is documented so the next Learn path can be added the same way.
