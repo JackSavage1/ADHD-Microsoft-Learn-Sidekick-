@@ -1,0 +1,143 @@
+{
+  "schema_version": 1,
+  "id": "canvas-other-data",
+  "title": "Connect to other data in a Power Apps canvas app",
+  "source": "https://learn.microsoft.com/en-us/training/modules/connect-to-other-data-in-powerapps-canvas-app/",
+  "steps": [
+    {
+      "id": "check-environment",
+      "type": "task",
+      "instruction": "At make.powerapps.com, click the Environment picker at the top right and select Sidekick Dev, the developer environment you have used all through this path.",
+      "why": "Your Client table and every app or flow you build here live in the selected environment, so pick the right one first.",
+      "estimated_minutes": 2,
+      "hint": "No Sidekick Dev in the list? Pick the developer environment you renamed or reused in module 1. Its Type reads Developer in the Power Platform admin center.",
+      "answer": "Top right, click Environment and choose Sidekick Dev. The page reloads with Sidekick Dev shown at the top right. In Tables, under the All tab, your Client table is listed."
+    },
+    {
+      "id": "create-client-tracker",
+      "type": "task",
+      "instruction": "In the left menu, click Create, then Create from blank. In the Start with a blank canvas dialog, choose Tablet size, name the app Client Tracker, and click Create.",
+      "why": "A blank canvas app gives you an empty screen, so you choose every data source and control yourself.",
+      "estimated_minutes": 3,
+      "hint": "Older layout? Under Create, click Blank app, then Blank canvas app, then Tablet. No Create in the menu? Try Apps, then New app. Close any welcome dialog in Studio.",
+      "answer": "Create, Create from blank, Tablet size, name Client Tracker, Create. Power Apps Studio opens with an empty Screen1, an app authoring menu down the left side, and a formula bar across the top."
+    },
+    {
+      "id": "add-clients-table",
+      "type": "task",
+      "instruction": "In the app authoring menu on the left, click Data, then Add data. Scan the list: tables from Sidekick Dev sit beside connectors such as SharePoint. Search for Clients and select it.",
+      "why": "Dataverse is a tabular data source: the app gets rows and columns it can show, filter, and update directly.",
+      "estimated_minutes": 3,
+      "hint": "The Data icon looks like a stacked cylinder. Search finds nothing? Select the Microsoft Dataverse connector first, then pick Clients. Tables appear under their plural name.",
+      "answer": "Data, Add data, search Clients, select it. Clients now shows in the Data pane. Dataverse is a premium connector, so app users need a premium Power Apps license; your Developer Plan already includes one."
+    },
+    {
+      "id": "client-gallery",
+      "type": "task",
+      "instruction": "In the left menu, click Insert, then Vertical gallery. When asked for a data source, pick Clients. Check that the gallery fills with your client rows.",
+      "why": "Because Clients is tabular, binding it to the gallery's Items property is enough to list every row.",
+      "estimated_minutes": 3,
+      "hint": "No data source prompt? With the gallery selected, set Data source to Clients on the Properties tab of the right pane, or type Clients in the formula bar for Items.",
+      "answer": "Insert, Vertical gallery, data source Clients. The formula bar for Items reads Clients, and each row shows a client such as its Client Name. To show City as well, click Edit next to Fields in the Properties pane."
+    },
+    {
+      "id": "add-office365-users",
+      "type": "task",
+      "instruction": "In the Data pane, click Add data again and search for Office 365 Users. Select it, then click Connect. Notice whether it asks you to pick a table this time.",
+      "why": "Office 365 Users is an action connector: it offers functions you call in formulas, not tables you pick.",
+      "estimated_minutes": 3,
+      "hint": "If a connection for your account is already listed, just select it. Sign in with the same work account you use for Power Apps if prompted.",
+      "answer": "Add data, Office 365 Users, Connect. It appears in the Data pane right away, with no table list, unlike Clients. Its data comes from functions such as MyProfile, UserProfile, Manager, and DirectReports."
+    },
+    {
+      "id": "show-display-name",
+      "type": "task",
+      "instruction": "Click Insert, then Text label, and drag it above the gallery. With the label selected, set its Text property to Office365Users.MyProfile().DisplayName in the formula bar.",
+      "why": "This is action data: MyProfile returns a record about the signed-in user, and DisplayName picks one field from it.",
+      "estimated_minutes": 3,
+      "hint": "The label may be listed as Text or Label. Type Office365Users and a dot, then let the formula bar suggest MyProfile. The property list sits left of the formula bar.",
+      "answer": "The label shows your own name. Every user who opens Client Tracker sees their own name, because the function runs as whoever is signed in. Red underline? Check the connector name in the Data pane."
+    },
+    {
+      "id": "compare-user-function",
+      "type": "task",
+      "instruction": "Insert a second Text label and set its Text property to User().FullName in the formula bar. Compare it with the first label. Which of the two needed a connector?",
+      "why": "User() is built into Power Apps for basic details, while Office 365 Users adds richer profile data like job title and manager.",
+      "estimated_minutes": 2,
+      "hint": "Look at the Data pane: is there a data source named User?",
+      "answer": "Both labels show your name. User() needs no connector and returns FullName, Email, and Image. Office 365 Users needs a connection but also offers JobTitle, Department, Manager, and DirectReports, which stay blank if your profile lacks them."
+    },
+    {
+      "id": "create-blank-flow",
+      "type": "task",
+      "instruction": "In the app authoring menu, click Power Automate, then Create new flow, then Create from blank. Click Untitled at the top left and rename the flow ClientGreeting, with no space.",
+      "why": "A flow created from Power Apps starts with the Power Apps trigger, so your app can run it like a function.",
+      "estimated_minutes": 4,
+      "hint": "Hover over the left icons to see their names, or try the Action menu, then Power Automate. The trigger may read When Power Apps calls a flow (V2).",
+      "answer": "Power Automate pane, Create new flow, Create from blank. The flow designer opens inside Studio with one trigger card, the Power Apps (V2) trigger, and ClientGreeting at the top left. Leave the trigger without inputs."
+    },
+    {
+      "id": "add-respond-action",
+      "type": "task",
+      "instruction": "Under the trigger, click the plus and Add an action. Search Respond to a Power App or flow and add it. Click Add an output, choose Text, name it reply, value Hello from Power Automate. Click Save.",
+      "why": "The respond action is how a flow sends a result back to the app that started it.",
+      "estimated_minutes": 4,
+      "hint": "Classic designer? Click New step instead of the plus. The action may read Respond to a PowerApp or flow. Keep the output name lowercase.",
+      "answer": "The respond card shows one Text output: title reply, value Hello from Power Automate. After Save, close the designer: ClientGreeting is listed under In your app in the Power Automate pane."
+    },
+    {
+      "id": "run-flow-button",
+      "type": "task",
+      "instruction": "Click Insert, then Button. With the button selected, pick OnSelect in the property list and type Set(varReply, ClientGreeting.Run()) in the formula bar.",
+      "why": "Run starts the flow, and Set stores what the flow responds in a variable the whole app can read.",
+      "estimated_minutes": 3,
+      "hint": "The property list is the dropdown left of the formula bar. ClientGreeting must match the flow name shown under In your app, without spaces.",
+      "answer": "OnSelect reads Set(varReply, ClientGreeting.Run()) with no red underline. Run takes no values because the trigger has no inputs. Inputs you add to the trigger later become Run parameters, in order."
+    },
+    {
+      "id": "show-reply-test",
+      "type": "task",
+      "instruction": "Insert another Text label and set its Text to varReply.reply in the formula bar. Then click Preview the app at the top right, click your button, and wait a few seconds.",
+      "why": "Testing end to end proves the app called the flow and received its reply.",
+      "estimated_minutes": 3,
+      "hint": "Preview is the play triangle, or press F5. Press Esc to return to Studio. Still empty? Click the three dots next to ClientGreeting, then Edit, and check the output name.",
+      "answer": "Before the click, the new label is empty. After it, the label shows Hello from Power Automate. The text after varReply and the dot is your output name, which Power Apps shows in lowercase."
+    },
+    {
+      "id": "save-publish",
+      "type": "task",
+      "instruction": "Click Save at the top right. Then click Publish, and in the dialog click Publish this version.",
+      "why": "Saving keeps your changes for editors, while publishing makes that version live for everyone the app is shared with.",
+      "estimated_minutes": 2,
+      "hint": "Save and Publish are icons among the app actions at the top right. If Publish asks you to save first, save, then click Publish again.",
+      "answer": "Save, then Publish, then Publish this version. At make.powerapps.com, Apps now lists Client Tracker. Play it to see your name, the Clients gallery, and the button that asks the flow."
+    },
+    {
+      "id": "quiz-action-vs-tabular",
+      "type": "quiz",
+      "instruction": "A teammate adds Office 365 Users to Client Tracker and looks for its table to set a gallery's Items, as with Clients. They find none. What do you tell them?",
+      "why": "Knowing whether a connector is tabular or action-based tells you how to get its data into a control.",
+      "estimated_minutes": 2,
+      "hint": "Think back to what the Data pane asked when you added each data source.",
+      "answer": "Office 365 Users is an action connector, so it has no tables. Set Items to one of its functions instead, such as DirectReports with a user's email. Action results also do not page in more rows automatically like tables."
+    },
+    {
+      "id": "quiz-when-flow",
+      "type": "quiz",
+      "instruction": "Your manager wants Client Tracker to email a welcome note and start a manager approval whenever a new client is added. Where should that logic live, and how does the app start it?",
+      "why": "Power Automate is the companion for multi-step and long-running work that app formulas are not built for.",
+      "estimated_minutes": 2,
+      "hint": "Think about the ClientGreeting flow and the button that called it.",
+      "answer": "In a Power Automate flow with the Power Apps (V2) trigger. The app calls it, for example from a save button's OnSelect with FlowName.Run(), passing values like the client's email. The flow keeps running even after the app closes."
+    },
+    {
+      "id": "quiz-refresh-flow",
+      "type": "quiz",
+      "instruction": "You edit ClientGreeting at make.powerautomate.com and add a second output. Back in Studio, varReply does not offer the new field. What should you do?",
+      "why": "Power Apps keeps a snapshot of a flow's inputs and outputs, so edits made outside Studio need a refresh.",
+      "estimated_minutes": 2,
+      "hint": "Look at the three dots next to the flow in the Power Automate pane.",
+      "answer": "In the Power Automate pane, click the three dots next to ClientGreeting, then Refresh. Studio pulls in the new output. Skipping this can make the flow fail, even in published apps, so save and republish afterward."
+    }
+  ]
+}
