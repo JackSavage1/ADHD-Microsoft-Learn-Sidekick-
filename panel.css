@@ -350,7 +350,15 @@ input {
   list-style: none;
 }
 
+/* Each row: the lesson itself, then its Skip / Add back button. */
+.lesson-row {
+  display: flex;
+  gap: 8px;
+}
+
 .lesson-item {
+  flex: 1 1 auto;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -372,6 +380,23 @@ input {
 /* The lesson you are on right now. */
 .lesson-item[aria-current="true"] {
   border-color: var(--primary);
+}
+
+/* Lessons you chose to skip fade back, but stay clickable. */
+.lesson-item.is-skipped {
+  border-style: dashed;
+  opacity: 0.6;
+}
+
+/* Quieter than the lesson itself, and centred instead of stretched. */
+.skip-btn {
+  flex: none;
+  align-self: center;
+  min-width: 76px;
+  padding: 0 10px;
+  border-color: var(--border);
+  color: var(--muted);
+  font-size: 0.875rem;
 }
 
 .lesson-item-title {
@@ -434,6 +459,19 @@ input {
 .chip-quiz {
   background: var(--hint-bg);
   color: var(--hint-label);
+}
+
+/* The lesson chip is a button that looks like the other chips. */
+.chip-btn {
+  border: 1px solid var(--border-strong);
+  color: var(--text);
+  font-size: 1em;
+  line-height: inherit;
+  cursor: pointer;
+}
+
+.chip-btn:hover {
+  background: var(--track);
 }
 
 .chip-done {

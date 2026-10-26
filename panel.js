@@ -74,6 +74,7 @@ async function save(...keys) {
 // Saved state. Each key is stored under the same name in chrome.storage.local.
 const state = {
   currentLessonId: null, // the lesson on screen, e.g. 'dataverse-tables'
+  skippedLessons: [],  // ids of lessons you chose to skip; Next lesson passes over them
   progress: {},        // { [lessonId]: { index, done: [stepId], quiz: { [stepId]: 'right' | 'wrong' } } }
   stats: newStats(),   // { sessionsCompleted, streak, lastSessionDay: 'YYYY-MM-DD' | null }
   timer: newTimer(),   // { status, endsAt, remainingMs, stepsDoneThisSession }
@@ -122,6 +123,7 @@ const el = {
   stage: $('stage'),
   loading: $('loading'),
   stepView: $('step-view'),
+  lessonChip: $('lesson-chip'),
   stepCounter: $('step-counter'),
   stepMinutes: $('step-minutes'),
   stepQuizChip: $('step-quiz-chip'),
@@ -137,6 +139,7 @@ const el = {
   quizScoreLine: $('quiz-score-line'),
   quizScore: $('quiz-score'),
   nextLessonBtn: $('next-lesson-btn'),
+  chooseLessonBtn: $('choose-lesson-btn'),
   courseDone: $('course-done'),
   restartBtn: $('restart-btn'),
 
@@ -247,8 +250,13 @@ async function loadCourse() {
     view.course = course;
     view.lessons = lessons;
     view.error = null;
-    // First visit, or the saved lesson was removed: start with the first lesson.
-    if (!findLesson(state.currentLessonId)) state.currentLessonId = lessons[0].id;
+    // First visit, or the saved lesson was removed: open the lesson list so you
+    // choose where to start (the first lesson is selected behind it).
+    if (!findLesson(state.currentLessonId)) {
+      state.currentLessonId = lessons[0].id;
+      view.showLessons = true;
+      save('currentLessonId');
+    }
     // Saved progress may come from an older version of a lesson: make it fit.
     for (const lesson of lessons) {
       state.progress[lesson.id] = tidyProgress(state.progress[lesson.id], lesson.steps.length);
@@ -304,10 +312,21 @@ function activeLesson() {
   return findLesson(state.currentLessonId);
 }
 
-// The lesson after this one in the course, or null after the last one.
+function isSkipped(lesson) {
+  return state.skippedLessons.includes(lesson.id);
+}
+
+function isComplete(lesson) {
+  const total = lesson.steps.length;
+  return countDone(lesson) === total || state.progress[lesson.id].index >= total;
+}
+
+// The next lesson worth doing: the first one after this lesson in course order
+// (wrapping around to the start) that is neither complete nor skipped.
 function nextLesson() {
   const i = view.lessons.indexOf(activeLesson());
-  return i >= 0 ? view.lessons[i + 1] || null : null;
+  const after = [...view.lessons.slice(i + 1), ...view.lessons.slice(0, Math.max(i, 0))];
+  return after.find((lesson) => !isComplete(lesson) && !isSkipped(lesson)) || null;
 }
 
 function lessonProgress() {
@@ -406,6 +425,9 @@ function renderMain() {
 
 function renderStep(step) {
   const { index, done } = lessonProgress();
+  const lessonNumber = view.lessons.indexOf(activeLesson()) + 1;
+  setText(el.lessonChip, `Lesson ${lessonNumber} of ${view.lessons.length}`);
+  el.lessonChip.setAttribute('aria-label', `Lesson ${lessonNumber} of ${view.lessons.length}. Choose a lesson`);
   setText(el.stepCounter, `Step ${index + 1} of ${activeLesson().steps.length}`);
   showText(el.stepMinutes, step.estimated_minutes ? `~${step.estimated_minutes} min` : '');
   el.stepQuizChip.hidden = step.type !== 'quiz';
@@ -434,8 +456,8 @@ function renderLessonComplete() {
   if (next) setText(el.nextLessonBtn, `Next lesson: ${next.title}`);
 }
 
-// The lesson list: one button per lesson, with how far along it is.
-// Built with createElement (not innerHTML), like all lesson text.
+// The lesson list: one row per lesson, with how far along it is and a
+// Skip / Add back button. Built with createElement (not innerHTML), like all lesson text.
 function renderLessonList() {
   setText(el.courseTitle, view.course.title);
   el.lessonItems.replaceChildren(...view.lessons.map((lesson, i) => {
@@ -452,19 +474,34 @@ function renderLessonList() {
     button.className = 'lesson-item';
     button.dataset.lessonId = lesson.id;
     if (lesson.id === state.currentLessonId) button.setAttribute('aria-current', 'true');
+    button.classList.toggle('is-skipped', isSkipped(lesson));
     button.append(title, status);
 
     const item = document.createElement('li');
+    item.className = 'lesson-row';
     item.append(button);
+
+    // A finished lesson has nothing left to skip.
+    if (!isComplete(lesson)) {
+      const label = isSkipped(lesson) ? 'Add back' : 'Skip';
+      const skip = document.createElement('button');
+      skip.type = 'button';
+      skip.className = 'btn btn-secondary skip-btn';
+      skip.dataset.skipId = lesson.id;
+      skip.textContent = label;
+      skip.setAttribute('aria-label', `${label}: ${lesson.title}`);
+      item.append(skip);
+    }
     return item;
   }));
 }
 
-// "Complete", "5 of 24 steps done", or "24 steps, about 70 min" for a fresh lesson.
+// "Complete", "Skipped", "5 of 24 steps done", or "24 steps, about 70 min".
 function lessonStatus(lesson) {
   const total = lesson.steps.length;
   const doneCount = countDone(lesson);
-  if (doneCount === total || state.progress[lesson.id].index >= total) return 'Complete';
+  if (isComplete(lesson)) return 'Complete';
+  if (isSkipped(lesson)) return 'Skipped';
   if (doneCount > 0) return `${doneCount} of ${total} steps done`;
   const minutes = lesson.steps.reduce((sum, step) => sum + (Number(step.estimated_minutes) || 0), 0);
   return `${total} steps, about ${minutes} min`;
@@ -670,9 +707,25 @@ function onLessonsToggle() {
   else el.lessonsBtn.focus();
 }
 
-function onLessonItemClick(event) {
-  const button = event.target.closest('button[data-lesson-id]');
-  if (button) openLesson(button.dataset.lessonId);
+function onLessonListClick(event) {
+  const skip = event.target.closest('button[data-skip-id]');
+  if (skip) {
+    toggleSkip(skip.dataset.skipId);
+    return;
+  }
+  const lesson = event.target.closest('button[data-lesson-id]');
+  if (lesson) openLesson(lesson.dataset.lessonId);
+}
+
+function toggleSkip(lessonId) {
+  const skipped = state.skippedLessons;
+  state.skippedLessons = skipped.includes(lessonId)
+    ? skipped.filter((id) => id !== lessonId)
+    : [...skipped, lessonId];
+  save('skippedLessons');
+  render();
+  // The list was rebuilt, so put focus back on the same row's button.
+  el.lessonItems.querySelector(`[data-skip-id="${CSS.escape(lessonId)}"]`)?.focus();
 }
 
 // Mark a step done, count it toward this session (first time only), move on.
@@ -827,7 +880,7 @@ function tidyStats(raw) {
 
 // ---- 12. Keyboard shortcuts -------------------------------------------------
 // Enter = Done (or Reveal answer on a quiz), S = Stuck, B or Left arrow = Back,
-// Escape = close the lesson list.
+// L = open or close the lesson list, Escape = close it.
 // Ignored while typing, while the session overlay is up, and for held-down keys.
 
 function onKeyDown(event) {
@@ -841,13 +894,15 @@ function onKeyDown(event) {
     return;
   }
   if (lessonIsBlocked()) return;
-  if (view.showLessons) {
-    if (event.key === 'Escape') onLessonsToggle();
-    return; // the step shortcuts don't apply while the list is open
+  const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+  if (key === 'l' || (key === 'Escape' && view.showLessons)) {
+    event.preventDefault();
+    onLessonsToggle();
+    return;
   }
+  if (view.showLessons) return; // the step shortcuts don't apply while the list is open
 
   let button = null;
-  const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
   if (key === 'Enter' && !target?.closest('button')) {
     // (On a focused button, Enter already clicks that button.)
     button = el.doneBtn.hidden ? el.revealBtn : el.doneBtn;
@@ -868,8 +923,11 @@ function onKeyDown(event) {
 
 async function restoreState() {
   try {
-    const saved = await storage.get(['currentLessonId', 'progress', 'stats', 'timer', 'sessionLog']);
+    const saved = await storage.get(['currentLessonId', 'skippedLessons', 'progress', 'stats', 'timer', 'sessionLog']);
     state.currentLessonId = typeof saved.currentLessonId === 'string' ? saved.currentLessonId : null;
+    state.skippedLessons = Array.isArray(saved.skippedLessons)
+      ? saved.skippedLessons.filter((id) => typeof id === 'string')
+      : [];
     state.progress = isObject(saved.progress) ? saved.progress : {};
     state.stats = tidyStats(saved.stats);
     state.timer = tidyTimer(saved.timer);
@@ -899,7 +957,9 @@ function wireEvents() {
   el.nextLessonBtn.addEventListener('click', onNextLesson);
   el.lessonsBtn.addEventListener('click', onLessonsToggle);
   el.lessonsCloseBtn.addEventListener('click', onLessonsToggle);
-  el.lessonItems.addEventListener('click', onLessonItemClick);
+  el.lessonChip.addEventListener('click', onLessonsToggle);
+  el.chooseLessonBtn.addEventListener('click', onLessonsToggle);
+  el.lessonItems.addEventListener('click', onLessonListClick);
   el.retryBtn.addEventListener('click', onRetry);
   el.logNote.addEventListener('input', onNoteInput);
   el.logForm.addEventListener('submit', onLogSubmit);

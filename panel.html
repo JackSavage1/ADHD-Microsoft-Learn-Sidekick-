@@ -52,6 +52,8 @@
       <!-- The current step. Only one is ever shown. -->
       <section id="step-view" class="card step-card" aria-live="polite" hidden>
         <div class="step-meta">
+          <!-- Which lesson this is. Clicking it opens the lesson list. -->
+          <button id="lesson-chip" type="button" class="chip chip-btn" title="Choose a lesson (L)"></button>
           <span id="step-counter" class="step-counter">Step 1 of 1</span>
           <span id="step-minutes" class="chip" hidden></span>
           <span id="step-quiz-chip" class="chip chip-quiz" hidden>Quiz</span>
@@ -71,7 +73,8 @@
         <p id="complete-lesson-title" class="muted"></p>
         <p id="quiz-score-line" class="score">Quiz score <strong id="quiz-score">0/0</strong></p>
         <button id="next-lesson-btn" type="button" class="btn btn-primary" hidden>Next lesson</button>
-        <p id="course-done" class="muted" hidden>That was the last lesson in this course. Well done.</p>
+        <p id="course-done" class="muted" hidden>You've finished every lesson in your plan. Well done.</p>
+        <button id="choose-lesson-btn" type="button" class="btn btn-secondary">Choose a lesson</button>
         <p class="muted">Restarting clears the steps for this lesson only. Your streak and sessions stay.</p>
         <button id="restart-btn" type="button" class="btn btn-secondary">Restart lesson</button>
       </section>
@@ -80,6 +83,7 @@
       <section id="lesson-list" class="card list-card" aria-labelledby="lesson-list-title" hidden>
         <p id="course-title" class="eyebrow"></p>
         <h2 id="lesson-list-title" class="card-title">Lessons</h2>
+        <p class="muted">Pick any lesson. Skip the ones you don't need: Next lesson will pass over them.</p>
         <ol id="lesson-items" class="lesson-items"></ol>
         <button id="lessons-close-btn" type="button" class="btn btn-secondary">Back to the lesson</button>
       </section>

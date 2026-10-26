@@ -25,7 +25,8 @@ Each lesson ends with 3 quiz questions. The steps were written from Microsoft's 
 - **Stuck** shows a hint. Press it again to see the answer.
 - **25-minute countdown**, always visible. At zero, a full-panel "Session complete, walk away" screen asks you to log what you got done before you can continue.
 - **Quiz steps** at the end: reveal the answer, then score yourself right or wrong.
-- **A whole course.** Finish a lesson and a **Next lesson** button takes you straight to the next one. The list button (top right) shows every lesson and how far along you are.
+- **A whole course, your way.** The lesson list (the ≡ button at the top right, the "Lesson 2 of 7" chip on every step, or the **L** key) shows every lesson and how far along you are. Open any lesson, and press **Skip** on the ones you don't need.
+- **Next lesson** appears when you finish a lesson and takes you to the next one you haven't finished or skipped.
 - **Remembers everything** (your step, streak of study days, sessions completed) in `chrome.storage.local`, so closing the panel loses nothing.
 - **Private by design.** Only two permissions (`sidePanel`, `storage`). No content scripts, no host permissions: it never reads or changes Microsoft's pages, and it makes no network requests.
 
@@ -50,7 +51,8 @@ After you edit any file, go back to `chrome://extensions` and click the reload a
 Good to know:
 
 - The timer keeps counting if you close the panel. If time ran out while it was closed, the walk-away screen is waiting when you reopen it.
-- Keyboard shortcuts: **Enter** = Done (or Reveal answer on a quiz), **S** = Stuck, **B** or **←** = Back.
+- Keyboard shortcuts: **Enter** = Done (or Reveal answer on a quiz), **S** = Stuck, **B** or **←** = Back, **L** = lesson list, **Esc** = close it.
+- The first time you open Sidekick, it starts on the lesson list so you can choose where to begin.
 - Your streak counts days in a row with at least one logged session.
 - Power Apps sometimes renames buttons. If a label in a step doesn't match your screen, press Stuck: the hints cover the common alternatives.
 
