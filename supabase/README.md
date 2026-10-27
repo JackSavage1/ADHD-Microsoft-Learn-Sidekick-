@@ -45,7 +45,11 @@ Each save says which version it's based on (`p_base_version`). The function writ
 
 1. In the Supabase dashboard, open your project, then **SQL Editor**, then **New query**.
 2. Paste the whole migration file and click **Run**.
-3. Run the **Security Advisor** (Advisors, then Security Advisor). It may point out that the four functions are callable by `anon` with `security definer`. That's intended: they are the API.
+3. Run the **Security Advisor** (Advisors, then Security Advisor). Expect two kinds of notice, both intended:
+   - "RLS Enabled No Policy" on the two tables. With no policies, the API can't touch them at all.
+   - "Public/Signed-In Users Can Execute SECURITY DEFINER Function" on the four functions. They are the API, and each checks the sync code first.
+
+   The Performance Advisor reports nothing.
 4. In `panel.js`, set `SYNC_URL` to the project URL (Project Settings, then API) and `SYNC_KEY` to its **publishable** key, then reload the extension.
 
 Or, with the Supabase CLI: `supabase link --project-ref <ref>`, then `supabase db push`.
