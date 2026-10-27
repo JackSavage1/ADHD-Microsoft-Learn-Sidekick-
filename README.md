@@ -28,8 +28,8 @@ Each lesson ends with 3 quiz questions. The steps were written from Microsoft's 
 - **A whole course, your way.** The lesson list (the ≡ button at the top right, the "Lesson 2 of 7" chip on every step, or the **L** key) shows every lesson and how far along you are. Open any lesson, and press **Skip** on the ones you don't need.
 - **Next lesson** appears when you finish a lesson and takes you to the next one you haven't finished or skipped.
 - **Remembers everything** (your step, streak of study days, sessions completed) in `chrome.storage.local`, so closing the panel loses nothing. **Export** and **Import** (at the bottom of the lesson list) back it up to a file or move it to another computer.
-- **Optional cloud sync.** Turn it on and your progress follows you to any computer with your sync code, through a small server you run on Railway (`server/`).
-- **Private by design.** Only two permissions (`sidePanel`, `storage`). No content scripts, no host permissions: it never reads or changes Microsoft's pages. The only network requests are to your own sync server, and only after you turn sync on.
+- **Optional cloud sync.** Turn it on and your progress follows you to any computer with your sync code, stored in a Supabase database (`supabase/`).
+- **Private by design.** Only two permissions (`sidePanel`, `storage`). No content scripts, no host permissions: it never reads or changes Microsoft's pages. The only network requests go to the sync database, and only after you turn sync on.
 
 ## Install (2 minutes)
 
@@ -64,24 +64,22 @@ Everything stays on your computer. The lessons are the JSON files in this folder
 ## Cloud sync (optional)
 
 ```
- Sidekick panel (computer A) ──┐                      ┌──────────────────────┐
-                               ├── HTTPS + sync code ─▶│ Node.js sync service │──▶ Postgres
- Sidekick panel (computer B) ──┘                      │ on Railway (server/) │
-                                                      └──────────────────────┘
+ Sidekick panel (computer A) ──┐                          ┌─────────────────────────────────┐
+                               ├── HTTPS + sync code ───▶ │ Supabase: 4 SQL functions       │
+ Sidekick panel (computer B) ──┘   (POST /rest/v1/rpc/…)  │   └─▶ 2 tables, locked by RLS   │
+                                                          └─────────────────────────────────┘
 ```
 
-**Set it up once:**
-1. Deploy the server: follow [server/README.md](server/README.md). You end up with an address like `https://sidekick-sync.up.railway.app`.
-2. In `panel.js`, near the top, set `SYNC_URL` to that address (no trailing slash), then reload the extension.
+There is no server to run. Supabase hosts the Postgres database, and its API calls four SQL functions that are the only way in (see [supabase/README.md](supabase/README.md)). Sidekick is already pointed at the **sidekick-sync** project: `SYNC_URL` and `SYNC_KEY` near the top of `panel.js`.
 
 **Use it:**
 - **First computer:** lesson list, then **Turn on sync**. Sidekick shows your **sync code**, and your progress goes up to the cloud.
 - **Other computers:** lesson list, then **I have a code**. Paste the code and press **Connect**.
 - **After that:** Sidekick syncs a few seconds after each change, when the panel opens, and when you come back to it. If the server can't be reached, nothing stops you. Changes wait and go up later.
 
-**How it stays correct:** the server keeps your progress with a version number. When two computers save at once, the second one gets a "conflict" answer with the latest copy, merges it, and tries again. Merging keeps every finished step, quiz answer and logged session from both computers. A lesson you restart stays restarted.
+**How it stays correct:** the database keeps your progress with a version number. When two computers save at once, the second one gets a "conflict" answer with the latest copy, merges it, and tries again. Merging keeps every finished step, quiz answer and logged session from both computers. A lesson you restart stays restarted.
 
-**Privacy:** there are no accounts, emails or passwords. Your sync code is the only key, so keep it private. The server stores only a scrambled (hashed) version of the code. **Turn off** disconnects this computer and keeps your local progress. **Delete my cloud data** erases your copy on the server.
+**Privacy:** there are no accounts, emails or passwords. Your sync code is the only key, so keep it private. The database stores only a scrambled (hashed) version of the code. **Turn off** disconnects this computer and keeps your local progress. **Delete my cloud data** erases your copy in the cloud.
 
 ### Heads-up: developer environments are changing
 
@@ -102,9 +100,9 @@ The Developer Plan also doesn't include dataflows, so a few import steps in less
 | `icons/` | Toolbar and store icons (PNG). |
 | `tools/make-icons.js` | Optional script that regenerated the icons: `node tools/make-icons.js`. Not needed to run the extension. |
 | `tools/validate-lessons.js` | Optional checker for lesson files: `node tools/validate-lessons.js`. Not needed to run the extension. |
-| `server/` | The optional cloud sync service (Node.js and Postgres, deployed on Railway). The extension never loads these files. |
+| `supabase/` | The cloud sync database: one SQL migration (tables, security, the four functions) and a README. The extension never loads these files. |
 
-Everything is plain HTML, CSS and JavaScript: no frameworks, no libraries, no build step. Every file is meant to be read. The sync server follows the same idea: Node's built-in `http` module and one library, `pg`, to talk to Postgres.
+Everything is plain HTML, CSS and JavaScript: no frameworks, no libraries, no build step. Every file is meant to be read. Cloud sync follows the same idea: one commented SQL file and no server code.
 
 ## Adding another Microsoft Learn module
 
@@ -115,4 +113,4 @@ Everything is plain HTML, CSS and JavaScript: no frameworks, no libraries, no bu
 
 ## About the project (for LinkedIn)
 
-I built Sidekick, a Chrome extension that makes studying Microsoft Power Platform work with an ADHD brain instead of against it. It sits in Chrome's side panel next to Power Apps and turns Microsoft Learn's 7-module "Get started using Dataverse" path into about 150 small, hands-on steps, done in my real environment: set up the environment, build Client and Project tables, add columns, keys and choices, load data and build views, then a canvas app on top of it all. A Stuck button gives a hint and then the answer, so I never stall for long, and a 25-minute focus timer ends each session with a "walk away" screen that has me log what I got done, which builds a daily streak. It's written in plain JavaScript, HTML and CSS on Manifest V3 with only two permissions and no access to the pages I'm working in. Optional cloud sync runs on a small Node.js and Postgres service I deployed on Railway. It uses passwordless sync codes stored only as hashes, plus version-checked saves with a merge step, so progress from two computers never overwrites each other. The lesson format is documented, so the next Learn path can be added the same way.
+I built Sidekick, a Chrome extension that makes studying Microsoft Power Platform work with an ADHD brain instead of against it. It sits in Chrome's side panel next to Power Apps and turns Microsoft Learn's 7-module "Get started using Dataverse" path into about 150 small, hands-on steps, done in my real environment: set up the environment, build Client and Project tables, add columns, keys and choices, load data and build views, then a canvas app on top of it all. A Stuck button gives a hint and then the answer, so I never stall for long, and a 25-minute focus timer ends each session with a "walk away" screen that has me log what I got done, which builds a daily streak. It's written in plain JavaScript, HTML and CSS on Manifest V3 with only two permissions and no access to the pages I'm working in. Optional cloud sync runs on Supabase with no server code. Row-level security locks the tables, and four SQL functions are the only way in. It uses passwordless sync codes stored only as hashes, plus version-checked saves with a merge step, so progress from two computers never overwrites each other. The lesson format is documented, so the next Learn path can be added the same way.

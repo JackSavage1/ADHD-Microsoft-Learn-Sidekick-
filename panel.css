@@ -479,14 +479,16 @@ input {
 
 .code-row {
   display: flex;
+  flex-wrap: wrap; /* in a narrow panel, Copy moves under the code */
   gap: 8px;
 }
 
+/* Wide enough for the whole 23-character code, so none of it is hidden. */
 .code-input {
-  flex: 1 1 auto;
+  flex: 1 1 15rem;
   min-width: 0;
   font-family: ui-monospace, Consolas, monospace;
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
 }
 
 .sync-group > .btn {

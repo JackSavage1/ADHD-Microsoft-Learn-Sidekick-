@@ -16,7 +16,7 @@
      10. Focus timer     start, pause, tick, end
      11. Session log     the "walk away" screen and the streak maths
      12. Backup          export and import progress as a file
-     13. Cloud sync      optional: keep progress on your own server (see server/)
+     13. Cloud sync      optional: keep progress in Supabase (see supabase/)
      14. Keyboard        optional shortcuts
      15. Start-up
 
@@ -36,9 +36,11 @@ const MIN_TEXT_SCALE = 0.5;   // auto-fit never shrinks step text below half its
 const HERO_RATIO = { full: 1.625, smallest: 1.25 }; // instruction size relative to body text
 const HERO_KEEP_SCALE = 0.85; // above this scale the instruction keeps its full ratio
 
-// Cloud sync (see server/README.md). Your server's address with no trailing
-// slash, e.g. 'https://sidekick-sync.up.railway.app'. Empty turns cloud sync off.
-const SYNC_URL = '';
+// Cloud sync (see supabase/README.md): your Supabase project's URL and its
+// publishable key. The publishable key is meant to ship inside apps: it can only
+// call the four sync functions, never read the tables. Empty turns sync off.
+const SYNC_URL = 'https://ixypjimsyflzalwoeddh.supabase.co';
+const SYNC_KEY = 'sb_publishable_XipQaWj8sQcAoG97ArXn_A_pAIOETWs';
 const SYNC_DELAY_MS = 3000;    // after a change, wait this long, then upload
 const SYNC_RECHECK_MS = 15000; // coming back to the panel re-checks the cloud at most this often
 
@@ -1079,16 +1081,16 @@ function onImportCancel() {
 
 
 // ---- 13. Cloud sync ---------------------------------------------------------
-// Optional. With SYNC_URL set, your progress is also kept on your own server
-// (see server/), and any computer with your sync code picks up where you left off.
+// Optional. With SYNC_URL set, your progress is also kept in a Supabase database
+// (see supabase/), and any computer with your sync code picks up where you left off.
 //
 // How two computers stay correct:
-//   - The server keeps your progress with a version number that goes up on every save.
+//   - The database keeps your progress with a version number that goes up on every save.
 //   - We remember the version we last synced with (state.sync.version).
 //   - Download: if the cloud's version is different, another computer saved since,
 //     so we merge its copy into ours. Merging keeps every step finished anywhere.
 //   - Upload: we send our copy with the version it's based on. If another computer
-//     saved in between, the server answers 409 with its copy: we merge and try again.
+//     saved in between, the answer is "conflict" with its copy: we merge and try again.
 // Sync never blocks the lesson: if the server can't be reached, your changes wait
 // here (state.sync.dirty) and go up next time.
 
@@ -1098,8 +1100,12 @@ let syncAgain = false;     // a change came in during a sync: run once more afte
 let lastSyncAttempt = 0;
 let localChanges = 0;      // counts saves, so a sync can tell if something changed under it
 
+function syncConfigured() {
+  return Boolean(SYNC_URL && SYNC_KEY);
+}
+
 function syncIsOn() {
-  return Boolean(SYNC_URL && state.sync.code);
+  return syncConfigured() && Boolean(state.sync.code);
 }
 
 function scheduleSync() {
@@ -1137,7 +1143,7 @@ async function syncNow() {
 // One round trip: download, merge if another computer saved, upload if needed.
 async function syncOnce() {
   const changesAtStart = localChanges;
-  const cloud = await syncRequest('GET', '/api/progress');
+  const cloud = await syncCall('sidekick_get_progress', { p_code: state.sync.code });
   const cloudMoved = cloud.version !== state.sync.version;
   if (cloudMoved && cloud.data) mergeIn(cloud.data);
   if (!cloudMoved && !state.sync.dirty) {
@@ -1148,7 +1154,11 @@ async function syncOnce() {
   // Upload. A conflict means another computer saved a moment ago: merge, retry.
   let baseVersion = cloud.version;
   for (let attempt = 0; attempt < 3; attempt++) {
-    const result = await syncRequest('PUT', '/api/progress', { data: progressSnapshot(), baseVersion });
+    const result = await syncCall('sidekick_put_progress', {
+      p_code: state.sync.code,
+      p_data: progressSnapshot(),
+      p_base_version: baseVersion,
+    });
     if (!result.conflict) {
       finishSync(result, changesAtStart);
       return;
@@ -1230,24 +1240,31 @@ function mergeStats(a, b, loggedSessions) {
   };
 }
 
-// Talk to the sync server. Returns the JSON answer, or { conflict: true, ... }
-// for a 409. Anything else that isn't OK becomes an error with a plain message.
-async function syncRequest(method, path, body, code = state.sync.code) {
-  const headers = {};
-  if (code) headers.Authorization = `Bearer ${code}`;
-  if (body) headers['Content-Type'] = 'application/json';
+// Call one of the four sync functions in the database (supabase/migrations/).
+// Supabase serves each as POST /rest/v1/rpc/<name>, and each answers with a
+// "status". Returns the answer for 'ok', { conflict: true, ... } for 'conflict',
+// and turns everything else into an error with a plain message.
+async function syncCall(name, params) {
+  const headers = { apikey: SYNC_KEY, 'Content-Type': 'application/json' };
+  // Older "anon" keys are JWTs and also go in Authorization; publishable keys don't.
+  if (SYNC_KEY.startsWith('eyJ')) headers.Authorization = `Bearer ${SYNC_KEY}`;
   let response;
   try {
-    response = await fetch(SYNC_URL + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    response = await fetch(`${SYNC_URL}/rest/v1/rpc/${name}`, { method: 'POST', headers, body: JSON.stringify(params) });
   } catch {
     throw new Error("Can't reach the sync server right now. Your progress is safe here and will sync later.");
   }
-  const answer = response.status === 204 ? {} : await response.json().catch(() => ({}));
-  if (response.status === 409) return { conflict: true, ...answer };
-  if (response.status === 401) throw new Error("The cloud doesn't recognise that sync code. Check it, or turn sync off.");
-  if (response.status === 429) throw new Error('The sync server is busy. Try again in a minute.');
-  if (!response.ok) throw new Error(answer.error || `The sync server answered ${response.status}.`);
-  return answer;
+  const answer = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(`The sync server answered ${response.status}${answer.message ? `: ${answer.message}` : '.'}`);
+
+  switch (answer.status) {
+    case 'ok': return answer;
+    case 'conflict': return { ...answer, conflict: true };
+    case 'unknown_code': throw new Error("The cloud doesn't recognise that sync code. Check it, or turn sync off.");
+    case 'busy': throw new Error('The sync server is busy. Try again in a minute.');
+    case 'too_large': throw new Error('Your progress is too large to sync. Export a backup instead.');
+    default: throw new Error('The sync server sent an answer Sidekick did not understand.');
+  }
 }
 
 // Link this browser to an account. Version 0 means the first sync merges with
@@ -1262,7 +1279,7 @@ async function onSyncCreate() {
   view.syncMessage = '';
   render();
   try {
-    const { code } = await syncRequest('POST', '/api/accounts', {}, null);
+    const { code } = await syncCall('sidekick_create_account', {});
     connectSync(code);
   } catch (err) {
     view.syncStatus = 'error';
@@ -1288,7 +1305,7 @@ async function onSyncJoin(event) {
   view.syncMessage = '';
   render();
   try {
-    await syncRequest('GET', '/api/progress', null, code); // check the code before keeping it
+    await syncCall('sidekick_get_progress', { p_code: code }); // check the code before keeping it
   } catch (err) {
     view.syncStatus = 'error';
     view.syncMessage = err.message;
@@ -1328,7 +1345,7 @@ function onSyncDeleteToggle() {
 
 async function onSyncDelete() {
   try {
-    await syncRequest('DELETE', '/api/account');
+    await syncCall('sidekick_delete_account', { p_code: state.sync.code });
   } catch (err) {
     view.syncStatus = 'error';
     view.syncMessage = err.message;
@@ -1346,11 +1363,11 @@ function onVisibilityChange() {
 }
 
 function renderSync() {
-  el.syncTools.hidden = !SYNC_URL;
+  el.syncTools.hidden = !syncConfigured();
   setText(el.dataWhere, syncIsOn()
     ? 'Saved in this browser and in the cloud. You can also export a backup file, or import one.'
     : 'Saved only in this browser. Export a backup file, or import one to bring your progress to another computer.');
-  if (!SYNC_URL) return;
+  if (!syncConfigured()) return;
 
   const on = Boolean(state.sync.code);
   const busy = view.syncStatus === 'syncing';
